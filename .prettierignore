@@ -3,3 +3,6 @@ dist/
 .wrangler/
 coverage/
 package-lock.json
+
+# Vendored from github.com/DietrichGebert/ponytail, kept verbatim
+.claude/skills/ponytail/
