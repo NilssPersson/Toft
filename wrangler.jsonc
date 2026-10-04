@@ -1,10 +1,13 @@
-// Cloudflare Workers config: serves the Vite build in ./dist as static assets.
+// Cloudflare Workers config: serves the static Astro build in ./dist as assets.
+// Unknown paths get dist/404.html with a 404 status.
 // The Worker name in the Cloudflare dashboard must match "name" below.
 {
   "name": "toft",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
-  }
+    "not_found_handling": "404-page"
+  },
+  // Required by `wrangler preview`, which Workers Builds runs for non-production branches.
+  "previews": {}
 }

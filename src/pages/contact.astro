@@ -1,0 +1,12 @@
+---
+import Page from '../layouts/Page.astro';
+import { SITE } from '../site/config.ts';
+---
+
+<Page title="Contact" description="Get in touch about Toft.">
+  <h1>Contact</h1>
+  <p>
+    Questions, bug reports or ideas for new crops? Send an email to
+    <a href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>.
+  </p>
+</Page>
