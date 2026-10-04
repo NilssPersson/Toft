@@ -42,6 +42,7 @@ Dashboard settings (Workers & Pages → toft → Settings → Builds):
 
 - Build command: `npm test && npm run build`
 - Deploy command: `npx wrangler deploy`
+- Non-production branch deploy command: `npx wrangler preview` (needs the `previews` block in `wrangler.jsonc`)
 
 The Worker must be named `toft` to match `wrangler.jsonc`. Astro needs Node 22.12 or newer; `.node-version` pins Node 22 for Workers Builds and CI.
 
