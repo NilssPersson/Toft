@@ -15,6 +15,8 @@ npm run dev        # http://localhost:4321
 | ------------------- | ------------------------------------------------------------- |
 | `npm run dev`       | Dev server with hot reload                                    |
 | `npm test`          | Game-rule tests (Vitest)                                      |
+| `npm run lint`      | ESLint (style, types and architecture rules)                  |
+| `npm run format`    | Format with Prettier (`format:check` to only check)           |
 | `npm run typecheck` | Type check (`astro check`, covers `.astro`, `.ts` and `.tsx`) |
 | `npm run build`     | Type check, then static build to `dist/`                      |
 | `npm run preview`   | Serve the built `dist/` locally                               |
