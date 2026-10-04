@@ -43,7 +43,7 @@ Dashboard settings (Workers & Pages → toft → Settings → Builds):
 - Build command: `npm test && npm run build`
 - Deploy command: `npx wrangler deploy`
 
-The Worker must be named `toft` to match `wrangler.jsonc`. Astro needs Node 22.12 or newer.
+The Worker must be named `toft` to match `wrangler.jsonc`. Astro needs Node 22.12 or newer; `.node-version` pins Node 22 for Workers Builds and CI.
 
 Set the real public URL in `src/site/config.ts` (`url`). It is used for canonical links, Open Graph tags and the sitemap.
 
