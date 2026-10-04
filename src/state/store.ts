@@ -37,7 +37,7 @@ export const useStore = create<StoreState>()(
       name: 'toft-save',
       version: 1,
       // Only the game itself is saved, never transient UI state.
-      partialize: (s) => ({ game: s.game }),
+      partialize: (state) => ({ game: state.game }),
     },
   ),
 );

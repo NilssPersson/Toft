@@ -1,6 +1,8 @@
 import { CROP_SLOTS, MULTIPLIER_SPOT, RESET_SPOT, WHEEL_SPOTS, multiplierBonus, spinsRequired } from './config.ts';
 import type { ProgressionState, SpinResult, SpotKind, WheelState } from './types.ts';
 
+type SpinOutcome = Pick<SpinResult, 'outcome' | 'progress'>;
+
 export function emptyWheel(): WheelState {
   return { filled: Array.from({ length: CROP_SLOTS }, () => false) };
 }
@@ -29,6 +31,28 @@ export function spotForRoll(roll: number): number {
   return Math.min(WHEEL_SPOTS - 1, Math.max(0, Math.floor(roll * WHEEL_SPOTS)));
 }
 
+/** What landing on a spot is worth. Landing on the multiplier before all 6 slots are filled counts as a reset. */
+function spinOutcome(wheel: WheelState, level: number, spotIndex: number): SpinOutcome {
+  const kind = spotKind(spotIndex);
+  if (kind === 'crop' && wheel.filled[spotIndex] === true) return { outcome: 'win', progress: 1 };
+  if (kind === 'multiplier' && multiplierActive(wheel))
+    return { outcome: 'multiplier', progress: multiplierBonus(level) };
+  return { outcome: 'reset', progress: 0 };
+}
+
+/** Apply an outcome to progression: a reset loses the level's progress, a win may level up. */
+function advanceProgression(
+  { level, spinsRemaining }: ProgressionState,
+  { outcome, progress }: SpinOutcome,
+): { progression: ProgressionState; hasLeveledUp: boolean } {
+  if (outcome === 'reset') {
+    return { progression: { level, spinsRemaining: spinsRequired(level) }, hasLeveledUp: false };
+  }
+  const remaining = spinsRemaining - progress;
+  if (remaining > 0) return { progression: { level, spinsRemaining: remaining }, hasLeveledUp: false };
+  return { progression: { level: level + 1, spinsRemaining: spinsRequired(level + 1) }, hasLeveledUp: true };
+}
+
 /**
  * Resolve one spin. Pure: returns the new wheel and progression rather than mutating.
  *
@@ -42,36 +66,11 @@ export function resolveSpin(
   roll: number,
 ): { wheel: WheelState; progression: ProgressionState; result: SpinResult } {
   const spotIndex = spotForRoll(roll);
-  const kind = spotKind(spotIndex);
-
-  let outcome: SpinResult['outcome'];
-  let progress = 0;
-  if (kind === 'crop' && wheel.filled[spotIndex]) {
-    outcome = 'win';
-    progress = 1;
-  } else if (kind === 'multiplier' && multiplierActive(wheel)) {
-    outcome = 'multiplier';
-    progress = multiplierBonus(prog.level);
-  } else {
-    outcome = 'reset';
-  }
-
-  let { level, spinsRemaining } = prog;
-  let leveledUp = false;
-  if (outcome === 'reset') {
-    spinsRemaining = spinsRequired(level);
-  } else {
-    spinsRemaining -= progress;
-    if (spinsRemaining <= 0) {
-      level += 1;
-      spinsRemaining = spinsRequired(level);
-      leveledUp = true;
-    }
-  }
-
+  const outcome = spinOutcome(wheel, prog.level, spotIndex);
+  const { progression, hasLeveledUp } = advanceProgression(prog, outcome);
   return {
     wheel: emptyWheel(),
-    progression: { level, spinsRemaining },
-    result: { spotIndex, spotKind: kind, outcome, progress, leveledUp },
+    progression,
+    result: { spotIndex, spotKind: spotKind(spotIndex), ...outcome, leveledUp: hasLeveledUp },
   };
 }

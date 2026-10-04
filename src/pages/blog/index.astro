@@ -3,25 +3,23 @@ import { getCollection } from 'astro:content';
 import Page from '../../layouts/Page.astro';
 
 const posts = (await getCollection('blog')).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+  (first, second) => second.data.pubDate.valueOf() - first.data.pubDate.valueOf(),
 );
 ---
 
 <Page title="Blog" description="News and devlogs from Toft.">
   <h1>Blog</h1>
   <ul class="post-list">
-    {
-      posts.map((post) => (
-        <li>
-          <a href={`/blog/${post.id}`}>{post.data.title}</a>
-          <div class="muted">
-            <time datetime={post.data.pubDate.toISOString()}>
-              {post.data.pubDate.toLocaleDateString('en-GB', { dateStyle: 'long' })}
-            </time>
-            · {post.data.description}
-          </div>
-        </li>
-      ))
-    }
+    {posts.map((post) => (
+      <li>
+        <a href={`/blog/${post.id}`}>{post.data.title}</a>
+        <div class="muted">
+          <time datetime={post.data.pubDate.toISOString()}>
+            {post.data.pubDate.toLocaleDateString('en-GB', { dateStyle: 'long' })}
+          </time>
+          · {post.data.description}
+        </div>
+      </li>
+    ))}
   </ul>
 </Page>

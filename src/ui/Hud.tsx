@@ -1,64 +1,94 @@
 import { useEffect } from 'react';
+import type { ReactElement } from 'react';
 import { spinsRequired, unlockedCrops } from '../game/index.ts';
+import type { CropDef } from '../game/index.ts';
 import { useStore } from '../state/store.ts';
 import { Wheel } from './Wheel.tsx';
 
-export function Hud() {
-  const { level, spinsRemaining } = useStore((s) => s.game.progression);
-  const selected = useStore((s) => s.selectedCrop);
-  const selectCrop = useStore((s) => s.selectCrop);
-  const reset = useStore((s) => s.reset);
-  const required = spinsRequired(level);
-  const crops = unlockedCrops(level);
-
+/** Esc stops placing the selected crop. */
+function useEscapeToDeselect(): void {
+  const selectCrop = useStore((state) => state.selectCrop);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') selectCrop(null);
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') selectCrop(null);
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+    };
   }, [selectCrop]);
+}
 
+function LevelPanel(): ReactElement {
+  const { level, spinsRemaining } = useStore((state) => state.game.progression);
+  const required = spinsRequired(level);
+  const wins = required - spinsRemaining;
+  return (
+    <div className="panel level-panel">
+      <div className="level">Level {level}</div>
+      <div className="progress">
+        <div className="progress-fill" style={{ width: `${(wins / required) * 100}%` }} />
+      </div>
+      <div className="progress-label">
+        {wins} / {required} wins
+      </div>
+    </div>
+  );
+}
+
+function CropButton({ crop }: { crop: CropDef }): ReactElement {
+  const selected = useStore((state) => state.selectedCrop);
+  const selectCrop = useStore((state) => state.selectCrop);
+  const isSelected = selected === crop.id;
+  return (
+    <button
+      className={`crop-button ${isSelected ? 'selected' : ''}`}
+      onClick={() => selectCrop(isSelected ? null : crop.id)}
+    >
+      <span className="swatch" style={{ background: crop.color }} />
+      {crop.name}
+      <small>
+        {crop.footprint.w}×{crop.footprint.d} · {crop.growSeconds}s
+      </small>
+    </button>
+  );
+}
+
+function NewIslandButton(): ReactElement {
+  const reset = useStore((state) => state.reset);
+  const onClick = (): void => {
+    if (window.confirm('Start a fresh island? This clears your save.')) reset();
+  };
+  return (
+    <button className="reset-save" onClick={onClick}>
+      New island
+    </button>
+  );
+}
+
+function CropPalette(): ReactElement {
+  const level = useStore((state) => state.game.progression.level);
+  const isPlacing = useStore((state) => state.selectedCrop !== null);
+  return (
+    <div className="panel palette">
+      {unlockedCrops(level).map((crop) => (
+        <CropButton key={crop.id} crop={crop} />
+      ))}
+      <span className="hint">
+        {isPlacing ? 'Click the island to plant · Esc to stop' : 'Pick a crop · click blue to water, yellow to harvest'}
+      </span>
+      <NewIslandButton />
+    </div>
+  );
+}
+
+export function Hud(): ReactElement {
+  useEscapeToDeselect();
   return (
     <div className="hud">
-      <div className="panel level-panel">
-        <div className="level">Level {level}</div>
-        <div className="progress">
-          <div className="progress-fill" style={{ width: `${((required - spinsRemaining) / required) * 100}%` }} />
-        </div>
-        <div className="progress-label">
-          {required - spinsRemaining} / {required} wins
-        </div>
-      </div>
-
+      <LevelPanel />
       <Wheel />
-
-      <div className="panel palette">
-        {crops.map((c) => (
-          <button
-            key={c.id}
-            className={`crop-button ${selected === c.id ? 'selected' : ''}`}
-            onClick={() => selectCrop(selected === c.id ? null : c.id)}
-          >
-            <span className="swatch" style={{ background: c.color }} />
-            {c.name}
-            <small>
-              {c.footprint.w}×{c.footprint.d} · {c.growSeconds}s
-            </small>
-          </button>
-        ))}
-        <span className="hint">
-          {selected ? 'Click the island to plant · Esc to stop' : 'Pick a crop · click blue to water, yellow to harvest'}
-        </span>
-        <button
-          className="reset-save"
-          onClick={() => {
-            if (window.confirm('Start a fresh island? This clears your save.')) reset();
-          }}
-        >
-          New island
-        </button>
-      </div>
+      <CropPalette />
     </div>
   );
 }
