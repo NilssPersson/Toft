@@ -2,25 +2,40 @@
 
 A cosy 3D farming game. Grow crops on your own island, harvest them to fill the wheel, and spin your way up the levels.
 
-Built with **React Three Fiber** (Three.js), **TypeScript**, **zustand** and **Vite**.
+The site is built with **Astro** (static output). The game itself is **React Three Fiber** (Three.js), **TypeScript** and **zustand**, mounted on `/play`.
 
 ## Getting started
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:4321
 ```
 
 | Script | What it does |
 |---|---|
 | `npm run dev` | Dev server with hot reload |
 | `npm test` | Game-rule tests (Vitest) |
-| `npm run typecheck` | TypeScript check |
-| `npm run build` | Production build to `dist/` |
+| `npm run typecheck` | Type check (`astro check`, covers `.astro`, `.ts` and `.tsx`) |
+| `npm run build` | Type check, then static build to `dist/` |
+| `npm run preview` | Serve the built `dist/` locally |
+
+## Pages
+
+| Route | Source | Notes |
+|---|---|---|
+| `/` | `src/pages/index.astro` | Landing page with a Play button |
+| `/play` | `src/pages/play.astro` | The game, mounted with `client:only="react"` |
+| `/blog` | `src/pages/blog/` | Posts are Markdown files in `src/content/blog/` |
+| `/contact` | `src/pages/contact.astro` | |
+| 404 | `src/pages/404.astro` | Served by Cloudflare for unknown paths |
+
+Marketing pages ship no JavaScript. Only `/play` loads React, three.js and the store. A sitemap is generated at `/sitemap-index.xml`.
+
+To write a blog post, add `src/content/blog/<slug>.md` with `title`, `description` and `pubDate` in the frontmatter.
 
 ## Deploying
 
-Deploys to Cloudflare Workers (static assets) via Workers Builds, configured in `wrangler.jsonc`.
+Deploys to Cloudflare Workers (static assets) via Workers Builds, configured in `wrangler.jsonc`. Unknown paths get `dist/404.html` with a 404 status.
 Every push to `main` builds and goes live; other branches get preview URLs.
 
 Dashboard settings (Workers & Pages → toft → Settings → Builds):
@@ -28,7 +43,9 @@ Dashboard settings (Workers & Pages → toft → Settings → Builds):
 - Build command: `npm test && npm run build`
 - Deploy command: `npx wrangler deploy`
 
-The Worker must be named `toft` to match `wrangler.jsonc`.
+The Worker must be named `toft` to match `wrangler.jsonc`. Astro needs Node 22.12 or newer.
+
+Set the real public URL in `src/site/config.ts` (`url`). It is used for canonical links, Open Graph tags and the sitemap.
 
 ## How to play (current prototype)
 
@@ -43,11 +60,18 @@ Progress is saved in the browser automatically.
 
 ```
 src/
+  pages/    Astro routes: /, /play, /blog, /contact, 404.
+  layouts/  Base.astro (SEO/Open Graph head), Page.astro (site header/footer).
+  content/  Blog posts (Markdown). Schema in src/content.config.ts.
+  site/     Site constants (name, URL, contact) and marketing-page CSS.
+  Game.tsx  Game entry point, mounted by /play. App.tsx is the game root.
   game/     Pure game rules: types, config/tuning, grid, wheel, rules + tests.
             No React, no Three.js, no clock or randomness.
   state/    zustand store: the only bridge between rules and app (dispatch(action)).
   scene/    3D world (R3F): island, crop plots, camera, lights.
   ui/       HTML overlay: level bar, wheel, crop palette.
+  styles.css  Game styles, loaded only by /play.
+public/     Static files copied as-is (favicon).
 ```
 
 See [DESIGN.md](DESIGN.md) for the game design and open questions, and [CLAUDE.md](CLAUDE.md) for architecture rules.

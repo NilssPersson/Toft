@@ -1,0 +1,13 @@
+---
+// The game. Rendered only in the browser: three.js needs WebGL and the
+// store reads its save from localStorage.
+import Base from '../layouts/Base.astro';
+import { Game } from '../Game.tsx';
+import '../styles.css';
+---
+
+<Base title="Play" description="Play Toft in your browser.">
+  <div id="root">
+    <Game client:only="react" />
+  </div>
+</Base>

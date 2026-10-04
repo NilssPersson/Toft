@@ -1,0 +1,21 @@
+---
+import Page from '../layouts/Page.astro';
+import { SITE } from '../site/config.ts';
+---
+
+<Page>
+  <section class="hero">
+    <h1>Toft</h1>
+    <p>{SITE.description}</p>
+    <a class="button" href="/play">Play</a>
+  </section>
+
+  <h2>How it works</h2>
+  <ol class="steps">
+    <li>Pick a crop and plant it on your island.</li>
+    <li>Water it when it asks, and watch it grow.</li>
+    <li>Harvest it to fill its slot on the wheel. The crop stays and can grow again.</li>
+    <li>Spin the wheel. Land on a filled slot to win, fill all six for a shot at the multiplier.</li>
+  </ol>
+  <p>Your island is saved in your browser, so you can pick up where you left off.</p>
+</Page>

@@ -1,0 +1,25 @@
+---
+import { getCollection, render } from 'astro:content';
+import Page from '../../layouts/Page.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<Page title={post.data.title} description={post.data.description} type="article">
+  <article>
+    <h1>{post.data.title}</h1>
+    <p class="muted">
+      <time datetime={post.data.pubDate.toISOString()}>
+        {post.data.pubDate.toLocaleDateString('en-GB', { dateStyle: 'long' })}
+      </time>
+    </p>
+    <Content />
+  </article>
+  <p><a href="/blog">← All posts</a></p>
+</Page>
