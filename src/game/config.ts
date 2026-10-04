@@ -78,7 +78,7 @@ export const CROPS: CropDef[] = [
   },
 ];
 
-export const CROPS_BY_ID: Record<string, CropDef> = Object.fromEntries(CROPS.map((c) => [c.id, c]));
+export const CROPS_BY_ID: Record<string, CropDef> = Object.fromEntries(CROPS.map((crop) => [crop.id, crop]));
 
 export function getCrop(id: string): CropDef {
   const crop = CROPS_BY_ID[id];

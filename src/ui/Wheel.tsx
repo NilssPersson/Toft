@@ -1,123 +1,166 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+import type { ReactElement } from 'react';
 import {
   CROP_SLOTS,
-  MULTIPLIER_SPOT,
   WHEEL_SPOTS,
   canSpin,
   filledCount,
+  multiplierActive,
   multiplierBonus,
+  spotKind,
   unlockedCrops,
 } from '../game/index.ts';
-import type { SpinResult } from '../game/index.ts';
+import type { CropDef, SpinResult } from '../game/index.ts';
 import { spin, useStore } from '../state/store.ts';
 
-const R = 100;
-const SEG = 360 / WHEEL_SPOTS;
+const RADIUS = 100;
+const SEGMENT_DEGREES = 360 / WHEEL_SPOTS;
 const SPIN_MS = 2600;
+const FULL_TURNS = 4;
+const DIMMED = 0.3;
 
-function point(deg: number, r: number): [number, number] {
-  const rad = (deg * Math.PI) / 180;
-  return [R + r * Math.sin(rad), R - r * Math.cos(rad)];
+interface SegmentStyle {
+  fill: string;
+  label: string;
+  opacity: number;
 }
 
-function segmentPath(i: number): string {
-  const [x1, y1] = point(i * SEG, R);
-  const [x2, y2] = point((i + 1) * SEG, R);
-  return `M ${R} ${R} L ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2} Z`;
+interface SegmentContext {
+  crops: CropDef[];
+  filled: boolean[];
+  level: number;
 }
 
-export function Wheel() {
-  const wheel = useStore((s) => s.game.wheel);
-  const level = useStore((s) => s.game.progression.level);
-  const crops = unlockedCrops(level);
+function polarPoint(degrees: number, radius: number): [number, number] {
+  const radians = (degrees * Math.PI) / 180;
+  return [RADIUS + radius * Math.sin(radians), RADIUS - radius * Math.cos(radians)];
+}
 
+function segmentPath(index: number): string {
+  const [startX, startY] = polarPoint(index * SEGMENT_DEGREES, RADIUS);
+  const [endX, endY] = polarPoint((index + 1) * SEGMENT_DEGREES, RADIUS);
+  return `M ${RADIUS} ${RADIUS} L ${startX} ${startY} A ${RADIUS} ${RADIUS} 0 0 1 ${endX} ${endY} Z`;
+}
+
+function cropSegmentStyle(crop: CropDef | undefined, isFilled: boolean): SegmentStyle {
+  if (!crop) return { fill: '#d6d0c4', label: '—', opacity: 1 };
+  return { fill: crop.color, label: crop.name, opacity: isFilled ? 1 : DIMMED };
+}
+
+function segmentStyle(index: number, context: SegmentContext): SegmentStyle {
+  switch (spotKind(index)) {
+    case 'crop':
+      return cropSegmentStyle(context.crops[index], context.filled[index] === true);
+    case 'multiplier': {
+      const isActive = multiplierActive({ filled: context.filled });
+      return { fill: '#f4c542', label: `×${multiplierBonus(context.level)}`, opacity: isActive ? 1 : DIMMED };
+    }
+    case 'reset':
+      return { fill: '#d65a4a', label: 'Reset', opacity: 1 };
+  }
+}
+
+/** How far to turn so the wheel stops with the landed spot under the pointer, after a few full turns. */
+function spinDelta(rotation: number, spotIndex: number): number {
+  const target = (360 - (spotIndex * SEGMENT_DEGREES + SEGMENT_DEGREES / 2)) % 360;
+  const current = ((rotation % 360) + 360) % 360;
+  return 360 * FULL_TURNS + ((target - current + 360) % 360);
+}
+
+const OUTCOME_TEXT: Record<SpinResult['outcome'], (result: SpinResult) => string> = {
+  win: () => 'Win! −1 spin',
+  multiplier: (result) => `Multiplier! −${result.progress} spins`,
+  reset: () => 'Reset — progress lost',
+};
+
+function describe(result: SpinResult): string {
+  const base = OUTCOME_TEXT[result.outcome](result);
+  return result.leveledUp ? `${base} · Level up!` : base;
+}
+
+interface WheelSpin {
+  rotation: number;
+  isSpinning: boolean;
+  shown: SpinResult | null;
+  /** The filled slots to draw: frozen at their pre-spin value while the wheel turns. */
+  filled: boolean[];
+  onSpin: () => void;
+}
+
+function useWheelSpin(): WheelSpin {
+  const wheel = useStore((state) => state.game.wheel);
   const [rotation, setRotation] = useState(0);
-  const [spinning, setSpinning] = useState(false);
   const [shown, setShown] = useState<SpinResult | null>(null);
   // The rules clear the wheel instantly; keep showing the pre-spin wheel until it stops.
-  const snapshot = useRef(wheel.filled);
-  const filled = spinning ? snapshot.current : wheel.filled;
-  const multiplierOn = filled.filter(Boolean).length === CROP_SLOTS;
+  const [frozenFilled, setFrozenFilled] = useState<boolean[] | null>(null);
+  const isSpinning = frozenFilled !== null;
 
-  const onSpin = () => {
-    if (spinning || !canSpin(wheel)) return;
-    snapshot.current = wheel.filled;
+  const onSpin = (): void => {
+    if (isSpinning || !canSpin(wheel)) return;
+    setFrozenFilled(wheel.filled);
     spin();
     const result = useStore.getState().game.lastSpin;
     if (!result) return;
-
-    const target = (360 - (result.spotIndex * SEG + SEG / 2)) % 360;
-    const current = ((rotation % 360) + 360) % 360;
-    setRotation(rotation + 360 * 4 + ((target - current + 360) % 360));
+    setRotation(rotation + spinDelta(rotation, result.spotIndex));
     setShown(null);
-    setSpinning(true);
     window.setTimeout(() => {
-      setSpinning(false);
+      setFrozenFilled(null);
       setShown(result);
     }, SPIN_MS);
   };
 
-  return (
-    <div className="panel wheel-panel">
-      <div className="wheel-wrap">
-        <div className="wheel-pointer" />
-        <svg
-          viewBox={`0 0 ${R * 2} ${R * 2}`}
-          className="wheel"
-          style={{ transform: `rotate(${rotation}deg)`, transitionDuration: `${SPIN_MS}ms` }}
-        >
-          {Array.from({ length: WHEEL_SPOTS }, (_, i) => {
-            const mid = point(i * SEG + SEG / 2, R * 0.66);
-            let fill = '#d6d0c4';
-            let label = '—';
-            let opacity = 1;
-            if (i < CROP_SLOTS) {
-              const crop = crops[i];
-              if (crop) {
-                fill = crop.color;
-                label = crop.name;
-                opacity = filled[i] ? 1 : 0.3;
-              }
-            } else if (i === MULTIPLIER_SPOT) {
-              fill = '#f4c542';
-              label = `×${multiplierBonus(level)}`;
-              opacity = multiplierOn ? 1 : 0.3;
-            } else {
-              fill = '#d65a4a';
-              label = 'Reset';
-            }
-            return (
-              <g key={i}>
-                <path d={segmentPath(i)} fill={fill} fillOpacity={opacity} stroke="#fffaf0" strokeWidth={2} />
-                <text
-                  x={mid[0]}
-                  y={mid[1]}
-                  className="wheel-label"
-                  transform={`rotate(${i * SEG + SEG / 2} ${mid[0]} ${mid[1]})`}
-                >
-                  {label}
-                </text>
-              </g>
-            );
-          })}
-          <circle cx={R} cy={R} r={14} fill="#fffaf0" />
-        </svg>
-      </div>
+  return { rotation, isSpinning, shown, filled: frozenFilled ?? wheel.filled, onSpin };
+}
 
-      <button className="spin-button" onClick={onSpin} disabled={spinning || !canSpin(wheel)}>
-        {spinning ? 'Spinning…' : `Spin (${filledCount(wheel)}/${CROP_SLOTS} filled)`}
-      </button>
-      <p className="spin-result">{shown ? describe(shown) : ' '}</p>
+function WheelSegment({ index, style }: { index: number; style: SegmentStyle }): ReactElement {
+  const middleDegrees = index * SEGMENT_DEGREES + SEGMENT_DEGREES / 2;
+  const [labelX, labelY] = polarPoint(middleDegrees, RADIUS * 0.66);
+  return (
+    <g>
+      <path d={segmentPath(index)} fill={style.fill} fillOpacity={style.opacity} stroke="#fffaf0" strokeWidth={2} />
+      <text x={labelX} y={labelY} className="wheel-label" transform={`rotate(${middleDegrees} ${labelX} ${labelY})`}>
+        {style.label}
+      </text>
+    </g>
+  );
+}
+
+function WheelFace({ rotation, filled }: { rotation: number; filled: boolean[] }): ReactElement {
+  const level = useStore((state) => state.game.progression.level);
+  const context: SegmentContext = { crops: unlockedCrops(level), filled, level };
+  return (
+    <div className="wheel-wrap">
+      <div className="wheel-pointer" />
+      <svg
+        viewBox={`0 0 ${RADIUS * 2} ${RADIUS * 2}`}
+        className="wheel"
+        style={{ transform: `rotate(${rotation}deg)`, transitionDuration: `${SPIN_MS}ms` }}
+      >
+        {Array.from({ length: WHEEL_SPOTS }, (_, i) => (
+          <WheelSegment key={i} index={i} style={segmentStyle(i, context)} />
+        ))}
+        <circle cx={RADIUS} cy={RADIUS} r={14} fill="#fffaf0" />
+      </svg>
     </div>
   );
 }
 
-function describe(r: SpinResult): string {
-  const base =
-    r.outcome === 'win'
-      ? 'Win! −1 spin'
-      : r.outcome === 'multiplier'
-        ? `Multiplier! −${r.progress} spins`
-        : 'Reset — progress lost';
-  return r.leveledUp ? `${base} · Level up!` : base;
+function SpinButton({ isSpinning, onSpin }: { isSpinning: boolean; onSpin: () => void }): ReactElement {
+  const wheel = useStore((state) => state.game.wheel);
+  return (
+    <button className="spin-button" onClick={onSpin} disabled={isSpinning || !canSpin(wheel)}>
+      {isSpinning ? 'Spinning…' : `Spin (${filledCount(wheel)}/${CROP_SLOTS} filled)`}
+    </button>
+  );
+}
+
+export function Wheel(): ReactElement {
+  const { rotation, isSpinning, shown, filled, onSpin } = useWheelSpin();
+  return (
+    <div className="panel wheel-panel">
+      <WheelFace rotation={rotation} filled={filled} />
+      <SpinButton isSpinning={isSpinning} onSpin={onSpin} />
+      <p className="spin-result">{shown ? describe(shown) : ' '}</p>
+    </div>
+  );
 }

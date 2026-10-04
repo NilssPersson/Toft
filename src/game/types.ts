@@ -12,6 +12,13 @@ export interface Footprint {
   d: number;
 }
 
+/** A footprint positioned on the grid, with its top-left cell at (x, z). */
+export interface Placement {
+  x: number;
+  z: number;
+  footprint: Footprint;
+}
+
 export type GrowthRequirement =
   | { kind: 'water' }
   /** Open design question: exactly how "needs another crop" is satisfied. */

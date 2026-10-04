@@ -1,5 +1,6 @@
 // Lint rules for Toft. The intent behind them is in the "Coding style" section of CLAUDE.md.
 import js from '@eslint/js';
+import { defineConfig } from 'eslint/config';
 import astro from 'eslint-plugin-astro';
 import prettier from 'eslint-config-prettier';
 import reactHooks from 'eslint-plugin-react-hooks';
@@ -42,7 +43,7 @@ const BROWSER_GLOBALS = [
   'requestAnimationFrame',
 ].map((name) => ({ name, message: 'src/game is pure: no browser APIs or timers.' }));
 
-export default tseslint.config(
+export default defineConfig(
   { ignores: ['dist/', '.astro/', '.wrangler/', 'node_modules/', 'coverage/'] },
 
   js.configs.recommended,

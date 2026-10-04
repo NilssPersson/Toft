@@ -11,7 +11,7 @@ const links = [
   { href: '/blog', label: 'Blog' },
   { href: '/contact', label: 'Contact' },
 ];
-const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+const isCurrent = (href: string): boolean => (href === '/' ? path === '/' : path.startsWith(href));
 ---
 
 <Base {...Astro.props}>
@@ -20,9 +20,9 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
       Toft
     </a>
     <nav>
-      {links.map((l) => (
-        <a href={l.href} aria-current={isCurrent(l.href) ? 'page' : undefined}>
-          {l.label}
+      {links.map((link) => (
+        <a href={link.href} aria-current={isCurrent(link.href) ? 'page' : undefined}>
+          {link.label}
         </a>
       ))}
       <a class="button small" href="/play">

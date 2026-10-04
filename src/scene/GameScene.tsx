@@ -1,7 +1,8 @@
+import type { ReactElement } from 'react';
 import { OrbitControls } from '@react-three/drei';
 import { Island } from './Island.tsx';
 
-export function GameScene() {
+export function GameScene(): ReactElement {
   return (
     <>
       <color attach="background" args={['#bfe3f2']} />
