@@ -18,6 +18,18 @@ npm run dev        # http://localhost:5173
 | `npm run typecheck` | TypeScript check |
 | `npm run build` | Production build to `dist/` |
 
+## Deploying
+
+Deploys to Cloudflare Workers (static assets) via Workers Builds, configured in `wrangler.jsonc`.
+Every push to `main` builds and goes live; other branches get preview URLs.
+
+Dashboard settings (Workers & Pages → toft → Settings → Builds):
+
+- Build command: `npm test && npm run build`
+- Deploy command: `npx wrangler deploy`
+
+The Worker must be named `toft` to match `wrangler.jsonc`.
+
 ## How to play (current prototype)
 
 1. Pick a crop in the bottom bar and click the island to plant it.
