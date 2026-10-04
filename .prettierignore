@@ -1,0 +1,5 @@
+dist/
+.astro/
+.wrangler/
+coverage/
+package-lock.json
