@@ -48,7 +48,9 @@ export function Hud() {
           </button>
         ))}
         <span className="hint">
-          {selected ? 'Click the island to plant · Esc to stop' : 'Pick a crop · click blue to water, yellow to harvest'}
+          {selected
+            ? 'Click the island to plant · Esc to stop'
+            : 'Pick a crop · click blue to water, yellow to harvest'}
         </span>
         <button
           className="reset-save"

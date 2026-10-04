@@ -22,12 +22,60 @@ export function multiplierBonus(level: number): number {
 
 /** Placeholder crops; names, timings and unlock levels are all to be balanced. */
 export const CROPS: CropDef[] = [
-  { id: 'carrot', name: 'Carrot', footprint: { w: 1, d: 1 }, growSeconds: 10, requirement: { kind: 'water' }, unlockLevel: 1, color: '#e8893a' },
-  { id: 'lettuce', name: 'Lettuce', footprint: { w: 1, d: 1 }, growSeconds: 15, requirement: { kind: 'water' }, unlockLevel: 1, color: '#7cc25a' },
-  { id: 'pumpkin', name: 'Pumpkin', footprint: { w: 1, d: 2 }, growSeconds: 30, requirement: { kind: 'water' }, unlockLevel: 5, color: '#d9762b' },
-  { id: 'sunflower', name: 'Sunflower', footprint: { w: 1, d: 1 }, growSeconds: 20, requirement: { kind: 'water' }, unlockLevel: 10, color: '#f2c84b' },
-  { id: 'berry', name: 'Berry bush', footprint: { w: 2, d: 1 }, growSeconds: 40, requirement: { kind: 'water' }, unlockLevel: 15, color: '#9b3b6e' },
-  { id: 'beanstalk', name: 'Beanstalk', footprint: { w: 1, d: 1 }, growSeconds: 45, requirement: { kind: 'crop', cropId: 'sunflower' }, unlockLevel: 20, color: '#3f8f4a' },
+  {
+    id: 'carrot',
+    name: 'Carrot',
+    footprint: { w: 1, d: 1 },
+    growSeconds: 10,
+    requirement: { kind: 'water' },
+    unlockLevel: 1,
+    color: '#e8893a',
+  },
+  {
+    id: 'lettuce',
+    name: 'Lettuce',
+    footprint: { w: 1, d: 1 },
+    growSeconds: 15,
+    requirement: { kind: 'water' },
+    unlockLevel: 1,
+    color: '#7cc25a',
+  },
+  {
+    id: 'pumpkin',
+    name: 'Pumpkin',
+    footprint: { w: 1, d: 2 },
+    growSeconds: 30,
+    requirement: { kind: 'water' },
+    unlockLevel: 5,
+    color: '#d9762b',
+  },
+  {
+    id: 'sunflower',
+    name: 'Sunflower',
+    footprint: { w: 1, d: 1 },
+    growSeconds: 20,
+    requirement: { kind: 'water' },
+    unlockLevel: 10,
+    color: '#f2c84b',
+  },
+  {
+    id: 'berry',
+    name: 'Berry bush',
+    footprint: { w: 2, d: 1 },
+    growSeconds: 40,
+    requirement: { kind: 'water' },
+    unlockLevel: 15,
+    color: '#9b3b6e',
+  },
+  {
+    id: 'beanstalk',
+    name: 'Beanstalk',
+    footprint: { w: 1, d: 1 },
+    growSeconds: 45,
+    requirement: { kind: 'crop', cropId: 'sunflower' },
+    unlockLevel: 20,
+    color: '#3f8f4a',
+  },
 ];
 
 export const CROPS_BY_ID: Record<string, CropDef> = Object.fromEntries(CROPS.map((c) => [c.id, c]));

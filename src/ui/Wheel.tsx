@@ -114,6 +114,10 @@ export function Wheel() {
 
 function describe(r: SpinResult): string {
   const base =
-    r.outcome === 'win' ? 'Win! −1 spin' : r.outcome === 'multiplier' ? `Multiplier! −${r.progress} spins` : 'Reset — progress lost';
+    r.outcome === 'win'
+      ? 'Win! −1 spin'
+      : r.outcome === 'multiplier'
+        ? `Multiplier! −${r.progress} spins`
+        : 'Reset — progress lost';
   return r.leveledUp ? `${base} · Level up!` : base;
 }

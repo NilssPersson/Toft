@@ -11,23 +11,23 @@ npm install
 npm run dev        # http://localhost:4321
 ```
 
-| Script | What it does |
-|---|---|
-| `npm run dev` | Dev server with hot reload |
-| `npm test` | Game-rule tests (Vitest) |
+| Script              | What it does                                                  |
+| ------------------- | ------------------------------------------------------------- |
+| `npm run dev`       | Dev server with hot reload                                    |
+| `npm test`          | Game-rule tests (Vitest)                                      |
 | `npm run typecheck` | Type check (`astro check`, covers `.astro`, `.ts` and `.tsx`) |
-| `npm run build` | Type check, then static build to `dist/` |
-| `npm run preview` | Serve the built `dist/` locally |
+| `npm run build`     | Type check, then static build to `dist/`                      |
+| `npm run preview`   | Serve the built `dist/` locally                               |
 
 ## Pages
 
-| Route | Source | Notes |
-|---|---|---|
-| `/` | `src/pages/index.astro` | Landing page with a Play button |
-| `/play` | `src/pages/play.astro` | The game, mounted with `client:only="react"` |
-| `/blog` | `src/pages/blog/` | Posts are Markdown files in `src/content/blog/` |
-| `/contact` | `src/pages/contact.astro` | |
-| 404 | `src/pages/404.astro` | Served by Cloudflare for unknown paths |
+| Route      | Source                    | Notes                                           |
+| ---------- | ------------------------- | ----------------------------------------------- |
+| `/`        | `src/pages/index.astro`   | Landing page with a Play button                 |
+| `/play`    | `src/pages/play.astro`    | The game, mounted with `client:only="react"`    |
+| `/blog`    | `src/pages/blog/`         | Posts are Markdown files in `src/content/blog/` |
+| `/contact` | `src/pages/contact.astro` |                                                 |
+| 404        | `src/pages/404.astro`     | Served by Cloudflare for unknown paths          |
 
 Marketing pages ship no JavaScript. Only `/play` loads React, three.js and the store. A sitemap is generated at `/sitemap-index.xml`.
 

@@ -4,5 +4,18 @@
   "trailingComma": "all",
   "semi": true,
   "plugins": ["prettier-plugin-astro"],
-  "overrides": [{ "files": "*.astro", "options": { "parser": "astro" } }]
+  "overrides": [
+    {
+      "files": "*.astro",
+      "options": {
+        "parser": "astro"
+      }
+    },
+    {
+      "files": "*.jsonc",
+      "options": {
+        "trailingComma": "none"
+      }
+    }
+  ]
 }
