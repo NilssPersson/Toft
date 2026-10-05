@@ -3,6 +3,8 @@ import type { ReactElement } from 'react';
 import { spinsRequired, unlockedCrops } from '../game/index.ts';
 import type { CropDef } from '../game/index.ts';
 import { useStore } from '../state/store.ts';
+import { FullscreenButton, useFullscreenOnFirstInteraction } from './Fullscreen.tsx';
+import { UpdatePrompt } from './UpdatePrompt.tsx';
 import { Wheel } from './Wheel.tsx';
 
 /** Esc stops placing the selected crop. */
@@ -84,9 +86,12 @@ function CropPalette(): ReactElement {
 
 export function Hud(): ReactElement {
   useEscapeToDeselect();
+  useFullscreenOnFirstInteraction();
   return (
     <div className="hud">
       <LevelPanel />
+      <FullscreenButton />
+      <UpdatePrompt />
       <Wheel />
       <CropPalette />
     </div>

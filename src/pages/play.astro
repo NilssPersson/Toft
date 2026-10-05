@@ -1,12 +1,21 @@
 ---
 // The game. Rendered only in the browser: three.js needs WebGL and the
-// store reads its save from localStorage.
+// store reads its save from localStorage. Also the installed app's start page.
 import Base from '../layouts/Base.astro';
 import { Game } from '../Game.tsx';
 import '../styles.css';
+
+// viewport-fit=cover lets the canvas run under the notch; the HUD pads itself with the safe-area insets.
+const VIEWPORT = 'width=device-width, initial-scale=1, viewport-fit=cover';
 ---
 
-<Base title="Play" description="Play Toft in your browser.">
+<Base title="Play" description="Play Toft in your browser." viewport={VIEWPORT}>
+  <Fragment slot="head">
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Toft" />
+  </Fragment>
   <div id="root">
     <Game client:only="react" />
   </div>

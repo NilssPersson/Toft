@@ -22,10 +22,21 @@ body,
   background: #bfe3f2;
 }
 
-/* The HUD floats over the canvas; only its panels catch pointer events. */
+/* The game owns every touch: no page scroll, pinch zoom or rubber-banding. */
+html,
+body {
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* The HUD floats over the canvas; only its panels catch pointer events.
+   It stays inside the safe area, clear of the notch and home indicator. */
 .hud {
   position: fixed;
-  inset: 0;
+  top: env(safe-area-inset-top, 0px);
+  right: env(safe-area-inset-right, 0px);
+  bottom: env(safe-area-inset-bottom, 0px);
+  left: env(safe-area-inset-left, 0px);
   pointer-events: none;
 }
 
@@ -147,7 +158,7 @@ body,
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  max-width: calc(100vw - 32px);
+  max-width: calc(100% - 32px);
 }
 
 .crop-button {
@@ -195,7 +206,46 @@ body,
   cursor: pointer;
 }
 
+/* Sits left of the wheel panel (right: 16px, width: 240px). */
+.fullscreen-toggle {
+  top: 16px;
+  right: 272px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.fullscreen-toggle svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Below the level panel. */
+.update-prompt {
+  top: 132px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.update-prompt .spin-button {
+  width: auto;
+  padding: 6px 12px;
+}
+
 @media (max-width: 640px) {
+  .fullscreen-toggle {
+    right: 16px;
+  }
+
   .wheel-panel {
     top: auto;
     bottom: 120px;

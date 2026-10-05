@@ -10,6 +10,14 @@ Cosy 3D farming game. Astro site (static output) with the game on `/play`: React
 - Blog posts are Markdown in `src/content/blog/`, schema in `src/content.config.ts`.
 - Site constants (name, public URL, contact) are in `src/site/config.ts`.
 
+## PWA
+
+- `public/manifest.webmanifest` and the icon/theme tags in `Base.astro` are on every page; they are tags only, no JS.
+- **The service worker registers only from `/play`**, in the game bundle (`src/pwa/serviceWorker.ts`). Never add a registration script to the layouts or marketing pages; ESLint blocks importing `src/pwa` or `workbox-window` there.
+- **Never force a reload during play.** No `skipWaiting`/`clientsClaim` on install and no auto-reload on update: a new version waits for the next launch or for the player to tap Restart on the update prompt.
+- The service worker is generated after the build by `integrations/serviceWorker.ts` (Workbox). `/play` is precached; other pages are network-first.
+- Fullscreen helpers live in `src/pwa/fullscreen.ts` and `src/ui/Fullscreen.tsx`, never in `src/game`.
+
 ## Architecture rules
 
 - **`src/game` is pure.** No React, Three.js, DOM, `Date.now()` or `Math.random()`. Time (`now`) and randomness (`roll`) are passed in. This keeps rules testable and lets a server run the same code for multiplayer.

@@ -1,0 +1,18 @@
+{
+  "id": "/play",
+  "name": "Toft",
+  "short_name": "Toft",
+  "description": "A cosy 3D farming game. Grow crops on your own island, harvest them to fill the wheel, and spin your way up the levels.",
+  "start_url": "/play",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#bfe3f2",
+  "theme_color": "#5a9e46",
+  "icons": [
+    { "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/pwa-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/maskable-icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
