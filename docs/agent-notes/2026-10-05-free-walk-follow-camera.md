@@ -16,6 +16,7 @@ status: new
 - The request needs a player, which only exists on the unmerged PR #10 branch; this branch is stacked on `claude/player-pathfinding-l102mo`.
 - "Move freely, not just straight lines" read as: click any point, walk in straight lines at any angle (not cell by cell), not as keyboard/joystick control.
 - "Can't look up towards the player" read as: camera tilt fixed (`minPolarAngle === maxPolarAngle` in `src/scene/FollowCamera.tsx`), turning around the player and zooming still allowed.
+- A press and release more than 6px apart counts as a camera drag, not a tap (`TAP_SLOP_PX` in `src/scene/pointer.ts`); R3F only filters drags for missed clicks (`delta <= 2` in `events-*.esm.js`), not for `onClick` on hit objects.
 - Being "next to" a crop now counts while passing by, since the player no longer stops on cells; DESIGN.md open question 9 updated.
 
 ## Repeated by hand
