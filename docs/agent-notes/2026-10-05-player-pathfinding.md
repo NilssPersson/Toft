@@ -1,7 +1,7 @@
 ---
 date: 2026-10-05
 branch: claude/player-pathfinding-l102mo
-pr:
+pr: 10
 status: new
 ---
 
