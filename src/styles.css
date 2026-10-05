@@ -4,6 +4,24 @@
   --paper-edge: #e8dcc4;
   --accent: #5a9e46;
   --accent-ink: #ffffff;
+  --accent-tint: #eaf5e4;
+  --star: #e8a92a;
+  --badge: #d65a4a;
+  --locked: #ece6da;
+  --shadow: 0 6px 18px rgb(0 0 0 / 0.12);
+
+  /* HUD scale: one tile size, one spacing scale. Landscape phones override these below. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --tile-size: 48px;
+  --tile-radius: 14px;
+  --panel-radius: 16px;
+  --hud-gap: var(--space-4);
+  --hotbar-height: calc(var(--tile-size) + 36px);
+  --panel-width: 320px;
+  --slide-ms: 250ms;
   font-family: ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif;
   color: var(--ink);
 }
@@ -29,7 +47,7 @@ body {
   touch-action: none;
 }
 
-/* The HUD floats over the canvas; only its panels catch pointer events.
+/* The HUD floats over the canvas and keeps to its edges; only its tiles and panels catch pointer events.
    It stays inside the safe area, clear of the notch and home indicator. */
 .hud {
   position: fixed;
@@ -45,24 +63,344 @@ body {
   position: absolute;
   background: var(--paper);
   border: 2px solid var(--paper-edge);
-  border-radius: 16px;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.12);
-  padding: 12px 14px;
+  border-radius: var(--panel-radius);
+  box-shadow: var(--shadow);
+  padding: var(--space-3) var(--space-4);
 }
 
-.level-panel {
-  top: 16px;
-  left: 16px;
-  width: 210px;
-}
-
-.level {
+/* Every icon button: one size, one rounded tile. */
+.tile {
+  pointer-events: auto;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--tile-size);
+  height: var(--tile-size);
+  padding: 0;
+  border: 2px solid var(--paper-edge);
+  border-radius: var(--tile-radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font: inherit;
   font-weight: 800;
-  font-size: 20px;
-  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.tile[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.tile:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.line-icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Top left. Above the side panel, where it becomes the panel's heading. */
+.level-chip {
+  position: absolute;
+  top: var(--hud-gap);
+  left: var(--hud-gap);
+  z-index: 2;
+  padding: 0 var(--space-4);
+  font-size: 18px;
+}
+
+.level-chip.is-open {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  font-size: 22px;
+}
+
+/* Bottom left. Above the side panel, in the space its last row leaves free. */
+.star-button {
+  position: absolute;
+  bottom: var(--hud-gap);
+  left: var(--hud-gap);
+  z-index: 2;
+  color: var(--star);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background: var(--badge);
+}
+
+/* Top right: system buttons, with the update prompt below them. */
+.hud-top-right {
+  position: absolute;
+  top: var(--hud-gap);
+  right: var(--hud-gap);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.tile-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.menu {
+  position: relative;
+}
+
+.popover {
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 180px;
+  /* Stops above the hotbar; on short screens the list scrolls. */
+  max-height: calc(
+    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2 * var(--hud-gap) - var(--tile-size) -
+      var(--hotbar-height) - 2 * var(--space-2)
+  );
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: var(--space-2);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: var(--paper-edge);
+}
+
+.crop-item small {
+  margin-left: auto;
+  padding-left: var(--space-3);
+  font-weight: 400;
+  opacity: 0.65;
+}
+
+.crop-item.is-selected {
+  background: var(--accent-tint);
+}
+
+.crop-item[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.update-prompt {
+  position: static;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.update-prompt .spin-button {
+  width: auto;
+  min-height: 0;
+  padding: 6px 12px;
+}
+
+/* Bottom right: the crops as an inventory hotbar. */
+.crop-hotbar {
+  right: var(--hud-gap);
+  bottom: var(--hud-gap);
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.crop-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: calc(var(--tile-size) + var(--space-4));
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.slot-tile {
+  display: grid;
+  place-items: center;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border: 2px solid var(--paper-edge);
+  border-radius: var(--tile-radius);
+  background: white;
+}
+
+.slot-swatch {
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.15);
+}
+
+.slot-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crop-slot.is-selected .slot-tile {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  box-shadow: 0 0 0 3px rgb(90 158 70 / 0.3);
+}
+
+.crop-slot.is-selected .slot-name {
+  color: var(--accent);
+}
+
+.crop-slot[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.crop-slot[aria-disabled='true'] .slot-tile {
+  background: var(--locked);
+}
+
+/* Bottom centre, just above the hotbar row. Taps go through to the island. */
+.hint-toast {
+  left: 50%;
+  bottom: calc(var(--hud-gap) + var(--hotbar-height) + var(--space-2));
+  transform: translateX(-50%);
+  max-width: calc(100% - 2 * var(--hud-gap));
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: toast-in 200ms ease-out;
+}
+
+/* With the side panel open, centre the toast over the island that is left visible. */
+.hud.is-panel-open .hint-toast {
+  left: calc(var(--panel-width) + (100% - var(--panel-width)) / 2);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Side panel: slides in from the left edge, full height, over the canvas. */
+.side-panel {
+  pointer-events: auto;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: calc(var(--panel-width) + env(safe-area-inset-left, 0px));
+  padding: calc(env(safe-area-inset-top, 0px) + var(--hud-gap)) var(--hud-gap)
+    calc(env(safe-area-inset-bottom, 0px) + var(--hud-gap)) calc(env(safe-area-inset-left, 0px) + var(--hud-gap));
+  border-right: 2px solid var(--paper-edge);
+  border-radius: 0 var(--panel-radius) var(--panel-radius) 0;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  transform: translateX(calc(-100% - 24px));
+  visibility: hidden;
+  transition:
+    transform var(--slide-ms) ease,
+    visibility 0s linear var(--slide-ms);
+}
+
+.side-panel.is-open {
+  transform: none;
+  visibility: visible;
+  transition:
+    transform var(--slide-ms) ease,
+    visibility 0s;
+}
+
+.side-panel > * {
+  flex: none;
+}
+
+/* The level chip covers the left of this row. */
+.side-panel-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.close-button {
+  font-size: 26px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.level-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .progress {
+  flex: 1;
   height: 10px;
   border-radius: 5px;
   background: var(--paper-edge);
@@ -76,25 +414,25 @@ body {
 }
 
 .progress-label {
-  margin-top: 6px;
   font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
   opacity: 0.75;
 }
 
-.wheel-panel {
-  top: 16px;
-  right: 16px;
-  width: 240px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+/* Takes the height left over, and the wheel fills as much of it as stays square. */
+.side-panel > .wheel-area {
+  flex: 1 1 0;
+  min-height: 0;
+  container-type: size;
+  display: grid;
+  place-items: center;
 }
 
 .wheel-wrap {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: min(100cqw, 100cqh);
+  height: min(100cqw, 100cqh);
 }
 
 .wheel {
@@ -127,9 +465,10 @@ body {
 
 .spin-button {
   width: 100%;
-  padding: 10px;
+  min-height: var(--tile-size);
+  padding: var(--space-2);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--tile-radius);
   background: var(--accent);
   color: var(--accent-ink);
   font: inherit;
@@ -142,197 +481,50 @@ body {
   cursor: default;
 }
 
+/* The last row, beside the ★. */
 .spin-result {
+  display: flex;
+  align-items: center;
+  min-height: var(--tile-size);
   margin: 0;
-  min-height: 1.2em;
+  padding-left: calc(var(--tile-size) + var(--space-3));
   font-size: 13px;
   font-weight: 600;
-  text-align: center;
 }
 
-.palette {
-  left: 50%;
-  bottom: 16px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  max-width: calc(100% - 32px);
-}
-
-.crop-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  border: 2px solid var(--paper-edge);
-  border-radius: 12px;
-  background: white;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.crop-button small {
-  font-weight: 400;
-  opacity: 0.6;
-}
-
-.crop-button.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgb(90 158 70 / 0.25);
-}
-
-.swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-}
-
-.hint {
-  font-size: 12px;
-  opacity: 0.65;
-  padding: 0 6px;
-}
-
-.reset-save {
-  border: none;
-  background: none;
-  font: inherit;
-  font-size: 12px;
-  text-decoration: underline;
-  opacity: 0.55;
-  cursor: pointer;
-}
-
-/* Sits left of the wheel panel (right: 16px, width: 240px). */
-.fullscreen-toggle {
-  top: 16px;
-  right: 272px;
-  display: grid;
-  place-items: center;
-  padding: 8px;
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.fullscreen-toggle svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* Below the level panel. */
-.update-prompt {
-  top: 132px;
-  left: 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.update-prompt .spin-button {
-  width: auto;
-  padding: 6px 12px;
-}
-
-@media (max-width: 640px) {
-  .fullscreen-toggle {
-    right: 16px;
+@media (prefers-reduced-motion: reduce) {
+  .side-panel,
+  .side-panel.is-open {
+    transition: none;
   }
-
-  .wheel-panel {
-    top: auto;
-    bottom: 120px;
-    width: 200px;
-  }
-  .wheel-wrap {
-    width: 160px;
-    height: 160px;
+  .hint-toast {
+    animation: none;
   }
 }
 
-/* Landscape phones are only about 340–430px tall: smaller panels, the wheel on the right,
-   the palette bottom-left beside it, and every tap target at least 44px. */
+/* Landscape phones are only about 340–430px tall: tighter edges, 44px tiles, a narrower side panel. */
 @media (max-height: 500px) {
-  .panel {
-    border-radius: 12px;
-    padding: 8px 10px;
+  :root {
+    --tile-size: 44px;
+    --tile-radius: 12px;
+    --panel-radius: 12px;
+    --hud-gap: var(--space-2);
+    --panel-width: min(40vw, 300px);
   }
 
-  .level-panel {
-    top: 8px;
-    left: 8px;
-    width: 170px;
-  }
-  .level {
+  .level-chip {
     font-size: 16px;
-    margin-bottom: 6px;
   }
-  .progress-label {
-    margin-top: 4px;
+  .level-chip.is-open {
+    font-size: 18px;
+  }
+  .side-panel {
+    gap: var(--space-2);
+  }
+  .progress-label,
+  .spin-result,
+  .hint-toast {
     font-size: 12px;
-  }
-
-  .wheel-panel {
-    top: 8px;
-    right: 8px;
-    bottom: auto;
-    width: 168px;
-    gap: 6px;
-  }
-  .wheel-wrap {
-    width: 128px;
-    height: 128px;
-  }
-  .spin-button {
-    min-height: 44px;
-    padding: 6px 10px;
-    font-size: 14px;
-  }
-  .spin-result {
-    font-size: 12px;
-  }
-
-  /* Left of the wheel panel (right: 8px, width: 168px). */
-  .fullscreen-toggle {
-    top: 8px;
-    right: 184px;
-    width: 44px;
-    height: 44px;
-  }
-
-  /* Below the compact level panel. */
-  .update-prompt {
-    top: 92px;
-    left: 8px;
-  }
-
-  /* Bottom-left, clear of the wheel panel on the right. */
-  .palette {
-    left: 8px;
-    bottom: 8px;
-    transform: none;
-    gap: 6px;
-    padding: 6px 8px;
-    max-width: calc(100% - 192px);
-  }
-  .crop-button {
-    min-height: 44px;
-    padding: 6px 10px;
-  }
-  /* No room for the mouse-worded hint: dropping it keeps the palette to one row over the island. */
-  .hint {
-    display: none;
-  }
-  .reset-save {
-    min-height: 44px;
-    padding: 0 8px;
   }
 }
 

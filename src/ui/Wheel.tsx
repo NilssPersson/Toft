@@ -89,6 +89,7 @@ interface WheelSpin {
 
 function useWheelSpin(): WheelSpin {
   const wheel = useStore((state) => state.game.wheel);
+  const setWheelSpinning = useStore((state) => state.setWheelSpinning);
   const [rotation, setRotation] = useState(0);
   const [shown, setShown] = useState<SpinResult | null>(null);
   // The rules clear the wheel instantly; keep showing the pre-spin wheel until it stops.
@@ -98,6 +99,7 @@ function useWheelSpin(): WheelSpin {
   const onSpin = (): void => {
     if (isSpinning || !canSpin(wheel)) return;
     setFrozenFilled(wheel.filled);
+    setWheelSpinning(true);
     spin();
     const result = useStore.getState().game.lastSpin;
     if (!result) return;
@@ -105,6 +107,7 @@ function useWheelSpin(): WheelSpin {
     setShown(null);
     window.setTimeout(() => {
       setFrozenFilled(null);
+      setWheelSpinning(false);
       setShown(result);
     }, SPIN_MS);
   };
@@ -129,18 +132,20 @@ function WheelFace({ rotation, filled }: { rotation: number; filled: boolean[] }
   const level = useStore((state) => state.game.progression.level);
   const context: SegmentContext = { crops: unlockedCrops(level), filled, level };
   return (
-    <div className="wheel-wrap">
-      <div className="wheel-pointer" />
-      <svg
-        viewBox={`0 0 ${RADIUS * 2} ${RADIUS * 2}`}
-        className="wheel"
-        style={{ transform: `rotate(${rotation}deg)`, transitionDuration: `${SPIN_MS}ms` }}
-      >
-        {Array.from({ length: WHEEL_SPOTS }, (_, i) => (
-          <WheelSegment key={i} index={i} style={segmentStyle(i, context)} />
-        ))}
-        <circle cx={RADIUS} cy={RADIUS} r={14} fill="#fffaf0" />
-      </svg>
+    <div className="wheel-area">
+      <div className="wheel-wrap">
+        <div className="wheel-pointer" />
+        <svg
+          viewBox={`0 0 ${RADIUS * 2} ${RADIUS * 2}`}
+          className="wheel"
+          style={{ transform: `rotate(${rotation}deg)`, transitionDuration: `${SPIN_MS}ms` }}
+        >
+          {Array.from({ length: WHEEL_SPOTS }, (_, i) => (
+            <WheelSegment key={i} index={i} style={segmentStyle(i, context)} />
+          ))}
+          <circle cx={RADIUS} cy={RADIUS} r={14} fill="#fffaf0" />
+        </svg>
+      </div>
     </div>
   );
 }
@@ -154,13 +159,16 @@ function SpinButton({ isSpinning, onSpin }: { isSpinning: boolean; onSpin: () =>
   );
 }
 
+/** The wheel, its Spin button and the last result, laid out by the side panel. The wheel scales to fit its area. */
 export function Wheel(): ReactElement {
   const { rotation, isSpinning, shown, filled, onSpin } = useWheelSpin();
   return (
-    <div className="panel wheel-panel">
+    <>
       <WheelFace rotation={rotation} filled={filled} />
       <SpinButton isSpinning={isSpinning} onSpin={onSpin} />
-      <p className="spin-result">{shown ? describe(shown) : ' '}</p>
-    </div>
+      <p className="spin-result" role="status">
+        {shown ? describe(shown) : ' '}
+      </p>
+    </>
   );
 }

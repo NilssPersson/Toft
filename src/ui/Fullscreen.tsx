@@ -45,7 +45,7 @@ function useIsFullscreen(): boolean {
 
 function FullscreenIcon({ isOn }: { isOn: boolean }): ReactElement {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <svg className="line-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
       <path d={isOn ? EXIT_ICON : ENTER_ICON} />
     </svg>
   );
@@ -57,7 +57,7 @@ export function FullscreenButton(): ReactElement | null {
   if (!canFullscreen()) return null;
   return (
     <button
-      className="panel fullscreen-toggle"
+      className="tile"
       onClick={toggleFullscreen}
       aria-label={isOn ? 'Exit fullscreen' : 'Enter fullscreen'}
       title={isOn ? 'Exit fullscreen' : 'Fullscreen'}

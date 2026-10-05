@@ -108,7 +108,7 @@ src/
             No React, no Three.js, no clock or randomness.
   state/    zustand store: the only bridge between rules and app (dispatch(action)).
   scene/    3D world (R3F): island, crop plots, camera, lights.
-  ui/       HTML overlay: level bar, wheel, crop palette.
+  ui/       HTML overlay along the screen edges: level chip, crop hotbar, ★ side panel with the wheel.
   styles.css  Game styles, loaded only by /play.
 public/     Static files copied as-is: favicon, app icons, web app manifest, Cloudflare _headers.
 integrations/  Build step that generates the service worker (dist/sw.js) with Workbox.
