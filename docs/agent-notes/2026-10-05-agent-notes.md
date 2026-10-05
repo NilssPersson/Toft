@@ -1,7 +1,7 @@
 ---
 date: 2026-10-05
 branch: claude/agent-notes
-pr:
+pr: 9
 status: new
 ---
 
