@@ -9,6 +9,7 @@ import { useStore } from '../state/store.ts';
 import { CropPlot } from './CropPlot.tsx';
 import { Player } from './Player.tsx';
 import { Walls } from './Walls.tsx';
+import { wasDrag } from './pointer.ts';
 import { footprintCenter, worldToCell, worldToIsland } from './coords.ts';
 
 const SURFACE_Y = 0;
@@ -50,6 +51,7 @@ function IslandGround({ size, onGroundClick }: IslandGroundProps): ReactElement 
   const { hover, onMove, onLeave } = usePlacementHover(size);
   const onClick = (event: ThreeEvent<MouseEvent>): void => {
     event.stopPropagation();
+    if (wasDrag(event)) return;
     onGroundClick(worldToIsland(event.point.x, event.point.z, size));
   };
   return (

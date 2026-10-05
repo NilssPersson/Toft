@@ -7,6 +7,7 @@ import { getCrop, growthProgress, isReady } from '../game/index.ts';
 import type { CropDef, PlacedCrop } from '../game/index.ts';
 import { now } from '../state/clock.ts';
 import { walkToCrop } from '../state/interaction.ts';
+import { wasDrag } from './pointer.ts';
 import { footprintCenter } from './coords.ts';
 
 const SEEDLING_SCALE = 0.25;
@@ -68,7 +69,7 @@ function PlantCone({ crop }: { crop: CropDef }): ReactElement {
   );
 }
 
-/** Placeholder visuals: clicking walks the player over to water or harvest it. a soil bed plus a cone that grows with progress. */
+/** Placeholder visuals: a soil bed plus a cone that grows with progress. Clicking walks the player over to water or harvest it. */
 export function CropPlot({ plot, islandSize }: CropPlotProps): ReactElement {
   const crop = getCrop(plot.cropId);
   const { plant, marker } = usePlotAnimation(plot);
@@ -76,6 +77,7 @@ export function CropPlot({ plot, islandSize }: CropPlotProps): ReactElement {
 
   const onClick = (event: ThreeEvent<MouseEvent>): void => {
     event.stopPropagation();
+    if (wasDrag(event)) return;
     walkToCrop(plot.uid);
   };
 
