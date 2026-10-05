@@ -46,6 +46,16 @@ Toft is a Progressive Web App. Installed, it opens straight into `/play` in full
 
 In a normal browser tab, `/play` goes fullscreen on the first click, tap or key press, and the button at the top right of the HUD toggles it. **On iPhone, Safari has no Fullscreen API**, so the button is hidden there; the only way to play fullscreen on iPhone is Add to Home Screen.
 
+### Orientation
+
+Toft plays in landscape on phones. How that's enforced depends on the platform:
+
+- **Android:** installed, the app opens locked to landscape (`"orientation": "landscape"` in the manifest). In a Chrome tab, the game locks to landscape each time it goes fullscreen (first tap or the fullscreen button); leaving fullscreen releases the lock.
+- **iPhone:** iOS can't lock orientation, in Safari or installed. Held upright, the game is covered by a "Turn your phone sideways to play" screen until the phone is rotated.
+- **Tablets and desktop:** never locked and never shown the rotate screen; play in any orientation.
+
+The lock helpers are in `src/pwa/orientation.ts`. A "phone" means a coarse pointer and a screen whose short side is under 500 CSS px. The rotate screen (`src/ui/RotateScreen.tsx`) is pure CSS: a `@media (orientation: portrait) and (pointer: coarse) and (max-width: 500px)` rule in `src/styles.css` shows it, so it follows rotation with no re-render. It only blocks input; the game keeps running underneath. A `@media (max-height: 500px)` block makes the HUD compact for landscape phones.
+
 How it fits together:
 
 - `public/manifest.webmanifest` describes the app (start URL `/play`, `display: fullscreen` with `standalone` as the fallback). `src/layouts/Base.astro` links it from every page, so any page can be installed. These are only tags; marketing pages still ship no JS.

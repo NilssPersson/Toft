@@ -256,3 +256,144 @@ body {
     height: 160px;
   }
 }
+
+/* Landscape phones are only about 340–430px tall: smaller panels, the wheel on the right,
+   the palette bottom-left beside it, and every tap target at least 44px. */
+@media (max-height: 500px) {
+  .panel {
+    border-radius: 12px;
+    padding: 8px 10px;
+  }
+
+  .level-panel {
+    top: 8px;
+    left: 8px;
+    width: 170px;
+  }
+  .level {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .progress-label {
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  .wheel-panel {
+    top: 8px;
+    right: 8px;
+    bottom: auto;
+    width: 168px;
+    gap: 6px;
+  }
+  .wheel-wrap {
+    width: 128px;
+    height: 128px;
+  }
+  .spin-button {
+    min-height: 44px;
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  .spin-result {
+    font-size: 12px;
+  }
+
+  /* Left of the wheel panel (right: 8px, width: 168px). */
+  .fullscreen-toggle {
+    top: 8px;
+    right: 184px;
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Below the compact level panel. */
+  .update-prompt {
+    top: 92px;
+    left: 8px;
+  }
+
+  /* Bottom-left, clear of the wheel panel on the right. */
+  .palette {
+    left: 8px;
+    bottom: 8px;
+    transform: none;
+    gap: 6px;
+    padding: 6px 8px;
+    max-width: calc(100% - 192px);
+  }
+  .crop-button {
+    min-height: 44px;
+    padding: 6px 10px;
+  }
+  /* No room for the mouse-worded hint: dropping it keeps the palette to one row over the island. */
+  .hint {
+    display: none;
+  }
+  .reset-save {
+    min-height: 44px;
+    padding: 0 8px;
+  }
+}
+
+/* Shown only on a phone held upright, where the landscape lock was refused or doesn't exist (iOS).
+   Pure CSS, so it follows rotation instantly. It sits over the canvas and HUD and swallows their input. */
+.rotate-screen {
+  display: none;
+}
+
+@media (orientation: portrait) and (pointer: coarse) and (max-width: 500px) {
+  .rotate-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: max(24px, env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-right, 0px))
+      max(24px, env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
+    background: var(--paper);
+    color: var(--ink);
+    text-align: center;
+    pointer-events: auto;
+  }
+
+  .rotate-screen p {
+    margin: 0;
+    max-width: 16em;
+    font-size: 20px;
+    font-weight: 800;
+  }
+}
+
+.rotate-icon {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rotate-phone {
+  transform-origin: 24px 24px;
+  animation: turn-sideways 2.4s ease-in-out infinite;
+}
+
+@keyframes turn-sideways {
+  0%,
+  25% {
+    transform: rotate(0deg);
+  }
+  55%,
+  100% {
+    transform: rotate(90deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotate-phone {
+    animation: none;
+  }
+}
