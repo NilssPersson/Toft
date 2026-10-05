@@ -4,9 +4,9 @@ import { useFrame } from '@react-three/fiber';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { Group, Mesh, MeshStandardMaterial } from 'three';
 import { getCrop, growthProgress, isReady } from '../game/index.ts';
-import type { Action, CropDef, PlacedCrop } from '../game/index.ts';
+import type { CropDef, PlacedCrop } from '../game/index.ts';
 import { now } from '../state/clock.ts';
-import { useStore } from '../state/store.ts';
+import { walkToCrop } from '../state/interaction.ts';
 import { footprintCenter } from './coords.ts';
 
 const SEEDLING_SCALE = 0.25;
@@ -49,13 +49,6 @@ function usePlotAnimation(plot: PlacedCrop): { plant: RefObject<Group | null>; m
   return { plant, marker };
 }
 
-/** What clicking a plot does: water it while it waits, harvest it once ready. */
-function plotAction(plot: PlacedCrop, now: number): Action | null {
-  if (plot.status === 'needsRequirement') return { type: 'fulfil', uid: plot.uid };
-  if (isReady(plot, now)) return { type: 'harvest', uid: plot.uid };
-  return null;
-}
-
 function SoilBed({ crop }: { crop: CropDef }): ReactElement {
   return (
     <mesh position={[0, 0.05, 0]} receiveShadow>
@@ -75,17 +68,15 @@ function PlantCone({ crop }: { crop: CropDef }): ReactElement {
   );
 }
 
-/** Placeholder visuals: a soil bed plus a cone that grows with progress. */
+/** Placeholder visuals: clicking walks the player over to water or harvest it. a soil bed plus a cone that grows with progress. */
 export function CropPlot({ plot, islandSize }: CropPlotProps): ReactElement {
   const crop = getCrop(plot.cropId);
-  const dispatch = useStore((state) => state.dispatch);
   const { plant, marker } = usePlotAnimation(plot);
   const [x, , z] = footprintCenter({ x: plot.x, z: plot.z, footprint: crop.footprint }, islandSize);
 
   const onClick = (event: ThreeEvent<MouseEvent>): void => {
     event.stopPropagation();
-    const action = plotAction(plot, now());
-    if (action) dispatch(action);
+    walkToCrop(plot.uid);
   };
 
   return (

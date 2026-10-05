@@ -6,7 +6,9 @@ test('a watered carrot is ready once its grow time has passed', async ({ page })
   await gotoGame(page);
   const growMs = getCrop('carrot').growSeconds * 1000;
   const carrot = { uid: 'p1', cropId: 'carrot', x: 0, z: 0, status: 'growing' as const };
-  await loadState(page, { crops: [{ ...carrot, growStartedAt: await gameNow(page) }], nextUid: 2 });
+  // Harvesting needs the player next to the crop.
+  const player = { x: 1, z: 0, path: [], walkStartedAt: 0 };
+  await loadState(page, { crops: [{ ...carrot, growStartedAt: await gameNow(page) }], nextUid: 2, player });
   expect(await isCropReady(page, 'p1')).toBe(false);
 
   await advanceTime(page, growMs);

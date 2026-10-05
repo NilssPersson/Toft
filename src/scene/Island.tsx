@@ -3,8 +3,12 @@ import type { ReactElement } from 'react';
 import type { ThreeEvent } from '@react-three/fiber';
 import { canPlace, getCrop } from '../game/index.ts';
 import type { Placement } from '../game/index.ts';
+import { now } from '../state/clock.ts';
+import { walkToCell } from '../state/interaction.ts';
 import { useStore } from '../state/store.ts';
 import { CropPlot } from './CropPlot.tsx';
+import { Player } from './Player.tsx';
+import { Walls } from './Walls.tsx';
 import { footprintCenter, worldToCell } from './coords.ts';
 
 const SURFACE_Y = 0;
@@ -38,17 +42,15 @@ function IslandBody({ size }: { size: number }): ReactElement {
 
 interface IslandGroundProps {
   size: number;
-  isPlacing: boolean;
-  onPlace: (cell: Cell) => void;
+  onCellClick: (cell: Cell) => void;
 }
 
-/** The grass top: also the click and hover target for placement. */
-function IslandGround({ size, isPlacing, onPlace }: IslandGroundProps): ReactElement {
+/** The grass top: the click target for planting and walking, and the hover target for placement. */
+function IslandGround({ size, onCellClick }: IslandGroundProps): ReactElement {
   const { hover, onMove, onLeave } = usePlacementHover(size);
   const onClick = (event: ThreeEvent<MouseEvent>): void => {
-    if (!isPlacing) return;
     event.stopPropagation();
-    onPlace(worldToCell(event.point.x, event.point.z, size));
+    onCellClick(worldToCell(event.point.x, event.point.z, size));
   };
   return (
     <>
@@ -70,13 +72,13 @@ function IslandGround({ size, isPlacing, onPlace }: IslandGroundProps): ReactEle
 
 /** A translucent preview of the selected crop under the pointer: white if it fits, red if not. */
 function PlacementGhost({ cell, size }: { cell: Cell; size: number }): ReactElement | null {
-  const crops = useStore((state) => state.game.crops);
+  const game = useStore((state) => state.game);
   const selected = useStore((state) => state.selectedCrop);
   const ghost = useMemo(() => {
     if (!selected) return null;
     const placement: Placement = { x: cell[0], z: cell[1], footprint: getCrop(selected).footprint };
-    return { placement, isValid: canPlace({ crops, islandSize: size }, placement) };
-  }, [selected, cell, crops, size]);
+    return { placement, isValid: canPlace(game, placement, now()) };
+  }, [selected, cell, game]);
   if (!ghost) return null;
 
   const [x, , z] = footprintCenter(ghost.placement, size);
@@ -95,18 +97,22 @@ export function Island(): ReactElement {
   const selected = useStore((state) => state.selectedCrop);
   const dispatch = useStore((state) => state.dispatch);
 
-  const onPlace = ([x, z]: Cell): void => {
+  // With a crop picked, a click plants it without walking there (DESIGN.md "Open questions"); otherwise the player walks.
+  const onCellClick = ([x, z]: Cell): void => {
     if (selected) dispatch({ type: 'place', cropId: selected, x, z });
+    else walkToCell(x, z);
   };
 
   return (
     <group>
       <IslandBody size={size} />
-      <IslandGround size={size} isPlacing={selected !== null} onPlace={onPlace} />
+      <IslandGround size={size} onCellClick={onCellClick} />
       <gridHelper args={[size, size, '#6fa54d', '#7fb65a']} position={[0, SURFACE_Y + 0.01, 0]} />
       {crops.map((plot) => (
         <CropPlot key={plot.uid} plot={plot} islandSize={size} />
       ))}
+      <Walls />
+      <Player />
     </group>
   );
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyAction, initialState, isReady } from './rules.ts';
 import { CROP_SLOTS, MULTIPLIER_SPOT, RESET_SPOT, WHEEL_SPOTS, multiplierBonus, spinsRequired } from './config.ts';
-import { canPlace } from './grid.ts';
+import { canPlace } from './placement.ts';
 import type { GameState, PlacedCrop } from './types.ts';
 
 /** A roll that lands exactly in the middle of spot i. */
@@ -13,8 +13,13 @@ function cropAt(state: GameState, index: number): PlacedCrop {
   return plot;
 }
 
+/** Puts the player, standing still, on a cell. */
+function standAt(state: GameState, x: number, z: number): GameState {
+  return { ...state, player: { x, z, path: [], walkStartedAt: 0 } };
+}
+
 function growAndHarvestCarrot(state: GameState, x: number, t0: number): GameState {
-  const planted = applyAction(state, { type: 'place', cropId: 'carrot', x, z: 0 }, t0);
+  const planted = applyAction(standAt(state, x, 1), { type: 'place', cropId: 'carrot', x, z: 0 }, t0);
   const uid = cropAt(planted, -1).uid;
   const growing = applyAction(planted, { type: 'fulfil', uid }, t0);
   return applyAction(growing, { type: 'harvest', uid }, t0 + 10_000);
@@ -23,9 +28,9 @@ function growAndHarvestCarrot(state: GameState, x: number, t0: number): GameStat
 describe('grid', () => {
   it('rejects out-of-bounds and overlapping placements', () => {
     const state = applyAction(initialState(), { type: 'place', cropId: 'carrot', x: 0, z: 0 }, 0);
-    expect(canPlace(state, { x: 0, z: 0, footprint: { w: 1, d: 1 } })).toBe(false);
-    expect(canPlace(state, { x: 11, z: 11, footprint: { w: 1, d: 2 } })).toBe(false);
-    expect(canPlace(state, { x: 1, z: 0, footprint: { w: 1, d: 1 } })).toBe(true);
+    expect(canPlace(state, { x: 0, z: 0, footprint: { w: 1, d: 1 } }, 0)).toBe(false);
+    expect(canPlace(state, { x: 11, z: 11, footprint: { w: 1, d: 2 } }, 0)).toBe(false);
+    expect(canPlace(state, { x: 1, z: 0, footprint: { w: 1, d: 1 } }, 0)).toBe(true);
   });
 
   it('does not place crops that are still locked', () => {
@@ -36,7 +41,7 @@ describe('grid', () => {
 
 describe('crop growth', () => {
   it('waits for its requirement, grows, and is not removed on harvest', () => {
-    let state = applyAction(initialState(), { type: 'place', cropId: 'carrot', x: 0, z: 0 }, 0);
+    let state = applyAction(standAt(initialState(), 0, 1), { type: 'place', cropId: 'carrot', x: 0, z: 0 }, 0);
     const uid = cropAt(state, 0).uid;
     expect(applyAction(state, { type: 'harvest', uid }, 999_999)).toBe(state);
 

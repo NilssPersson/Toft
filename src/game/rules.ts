@@ -1,5 +1,6 @@
-import { CROPS, CROP_SLOTS, ISLAND_SIZE, getCrop, spinsRequired } from './config.ts';
-import { canPlace } from './grid.ts';
+import { CROPS, CROP_SLOTS, ISLAND_SIZE, PLAYER_SPAWN, STARTING_WALLS, getCrop, spinsRequired } from './config.ts';
+import { isNextToPlot, isWalking, playerCell, walkTo } from './path.ts';
+import { canPlace } from './placement.ts';
 import { canSpin, emptyWheel, resolveSpin } from './wheel.ts';
 import type { Action, CropDef, CropId, GameState, PlacedCrop } from './types.ts';
 
@@ -10,6 +11,8 @@ export function initialState(): GameState {
   return {
     islandSize: ISLAND_SIZE,
     crops: [],
+    player: { ...PLAYER_SPAWN, path: [], walkStartedAt: 0 },
+    walls: STARTING_WALLS.map((wall) => ({ ...wall })),
     wheel: emptyWheel(),
     progression: { level: 1, spinsRemaining: spinsRequired(1) },
     lastSpin: null,
@@ -47,6 +50,12 @@ function findPlot(state: GameState, uid: string): PlacedCrop | undefined {
   return state.crops.find((plot) => plot.uid === uid);
 }
 
+/** The plot, if the player is standing next to it at `now`. Watering and harvesting need this. */
+function plotInReach(state: GameState, uid: string, now: number): PlacedCrop | undefined {
+  const plot = findPlot(state, uid);
+  return plot && isNextToPlot(playerCell(state, now), plot) ? plot : undefined;
+}
+
 function updatePlot(state: GameState, uid: string, patch: Partial<PlacedCrop>): GameState {
   return { ...state, crops: state.crops.map((plot) => (plot.uid === uid ? { ...plot, ...patch } : plot)) };
 }
@@ -60,10 +69,10 @@ function fillWheelSlot(state: GameState, cropId: CropId): GameState {
   return { ...state, wheel: { filled } };
 }
 
-const applyPlace: ActionHandler<'place'> = (state, action) => {
+const applyPlace: ActionHandler<'place'> = (state, action, now) => {
   const crop = getCrop(action.cropId);
   if (crop.unlockLevel > state.progression.level) return state;
-  if (!canPlace(state, { x: action.x, z: action.z, footprint: crop.footprint })) return state;
+  if (!canPlace(state, { x: action.x, z: action.z, footprint: crop.footprint }, now)) return state;
   const plot: PlacedCrop = {
     uid: `p${state.nextUid}`,
     cropId: crop.id,
@@ -78,17 +87,25 @@ const applyPlace: ActionHandler<'place'> = (state, action) => {
 const applyFulfil: ActionHandler<'fulfil'> = (state, action, now) => {
   // TODO: 'crop' requirements are fulfilled the same way as water for now,
   // until the design decides what "needs another crop" means in play.
-  const plot = findPlot(state, action.uid);
+  const plot = plotInReach(state, action.uid, now);
   if (plot?.status !== 'needsRequirement') return state;
   return updatePlot(state, plot.uid, { status: 'growing', growStartedAt: now });
 };
 
 const applyHarvest: ActionHandler<'harvest'> = (state, action, now) => {
-  const plot = findPlot(state, action.uid);
+  const plot = plotInReach(state, action.uid, now);
   if (!plot || !isReady(plot, now)) return state;
   // Harvesting keeps the crop; it just needs its requirement again to regrow.
   const harvested = updatePlot(state, plot.uid, { status: 'needsRequirement', growStartedAt: null });
   return fillWheelSlot(harvested, plot.cropId);
+};
+
+/** Walking to the cell the player already stands on, while not walking, changes nothing. */
+const applyMove: ActionHandler<'move'> = (state, action, now) => {
+  const player = walkTo(state, { x: action.x, z: action.z }, now);
+  if (!player) return state;
+  if (player.path.length === 0 && !isWalking(state, now)) return state;
+  return { ...state, player };
 };
 
 const applySpin: ActionHandler<'spin'> = (state, action) => {
@@ -102,6 +119,7 @@ const HANDLERS: { [K in Action['type']]: ActionHandler<K> } = {
   place: applyPlace,
   fulfil: applyFulfil,
   harvest: applyHarvest,
+  move: applyMove,
   spin: applySpin,
 };
 
