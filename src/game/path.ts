@@ -1,6 +1,6 @@
-import { WALK_CELLS_PER_SECOND } from './config.ts';
+import { PLAYER_CLEARANCE } from './config.ts';
 import { blockedCells, cellKey, isOnIsland, isSameCell, plotCells } from './grid.ts';
-import type { GameState, GridCell, PlacedCrop, PlayerState } from './types.ts';
+import type { GameState, GridCell, IslandPoint, PlacedCrop } from './types.ts';
 
 /** Up, right, down, left: a fixed order, so the same grid always gives the same path. */
 const NEIGHBOUR_OFFSETS: readonly GridCell[] = [
@@ -10,23 +10,35 @@ const NEIGHBOUR_OFFSETS: readonly GridCell[] = [
   { x: -1, z: 0 },
 ];
 
-const STEP_MS = 1000 / WALK_CELLS_PER_SECOND;
+/** How far apart, in cells, a straight line is checked for anything in the way. */
+const LINE_CHECK_STEP = 0.05;
 
-type Island = Pick<GameState, 'islandSize' | 'crops' | 'walls'>;
+/** The corners of the square the player needs free around a point. */
+const CLEARANCE_OFFSETS: readonly IslandPoint[] = [
+  { x: -PLAYER_CLEARANCE, z: -PLAYER_CLEARANCE },
+  { x: PLAYER_CLEARANCE, z: -PLAYER_CLEARANCE },
+  { x: -PLAYER_CLEARANCE, z: PLAYER_CLEARANCE },
+  { x: PLAYER_CLEARANCE, z: PLAYER_CLEARANCE },
+];
 
-/** How far along its path the player is at `now`, in steps from the start of the walk. */
-interface WalkProgress {
-  /** The number of cells fully reached. */
-  stepsDone: number;
-  /** True while between two cells. */
-  isMidStep: boolean;
+export type Island = Pick<GameState, 'islandSize' | 'crops' | 'walls'>;
+
+type CellCheck = (cell: GridCell) => boolean;
+
+/** The cell a point lies in. */
+export function cellOf(point: IslandPoint): GridCell {
+  return { x: Math.round(point.x), z: Math.round(point.z) };
+}
+
+export function distanceBetween(from: IslandPoint, to: IslandPoint): number {
+  return Math.hypot(to.x - from.x, to.z - from.z);
 }
 
 function neighbours(cell: GridCell): GridCell[] {
   return NEIGHBOUR_OFFSETS.map((offset) => ({ x: cell.x + offset.x, z: cell.z + offset.z }));
 }
 
-function openCellCheck(island: Island): (cell: GridCell) => boolean {
+function openCellCheck(island: Island): CellCheck {
   const blocked = blockedCells(island);
   return (cell) => isOnIsland(cell, island.islandSize) && !blocked.has(cellKey(cell));
 }
@@ -45,7 +57,7 @@ function tracePath(cameFrom: Map<string, GridCell | null>, end: GridCell): GridC
 }
 
 /** Breadth-first search over open cells, 4 directions, to the nearest cell that `isGoal` accepts. */
-function search(island: Island, from: GridCell, isGoal: (cell: GridCell) => boolean): GridCell[] | undefined {
+function search(island: Island, from: GridCell, isGoal: CellCheck): GridCell[] | undefined {
   const isOpen = openCellCheck(island);
   const cameFrom = new Map<string, GridCell | null>([[cellKey(from), null]]);
   const queue = [from];
@@ -60,8 +72,8 @@ function search(island: Island, from: GridCell, isGoal: (cell: GridCell) => bool
   return undefined;
 }
 
-/** The shortest path from one cell to another, without `from`; undefined if `to` is blocked or unreachable. */
-export function findPath(island: Island, from: GridCell, to: GridCell): GridCell[] | undefined {
+/** The fewest cells from one cell to another, without `from`; undefined if `to` is blocked or unreachable. */
+export function findCellPath(island: Island, from: GridCell, to: GridCell): GridCell[] | undefined {
   if (!openCellCheck(island)(to)) return undefined;
   return search(island, from, (cell) => isSameCell(cell, to));
 }
@@ -73,66 +85,62 @@ export function isNextToPlot(cell: GridCell, plot: PlacedCrop): boolean {
   return !isInside && footprint.some((part) => neighbours(part).some((next) => isSameCell(next, cell)));
 }
 
-/** The walkable cell next to a plot the player can reach soonest; undefined if there is none. */
-export function approachCell(state: GameState, plot: PlacedCrop, now: number): GridCell | undefined {
-  const isOpen = openCellCheck(state);
-  const from = walkOrigin(state.player, now);
-  const path = search(state, from, (cell) => isOpen(cell) && isNextToPlot(cell, plot));
+/** The open cell next to a plot that is the fewest cells from `from`; undefined if none can be reached. */
+export function nearestCellNextTo(island: Island, from: GridCell, plot: PlacedCrop): GridCell | undefined {
+  const isOpen = openCellCheck(island);
+  const path = search(island, from, (cell) => isOpen(cell) && isNextToPlot(cell, plot));
   return path && (path.at(-1) ?? from);
 }
 
-/** Steps walked at `now`, fractional mid-step, from 0 to the length of the path. */
-function stepsAt(player: PlayerState, now: number): number {
-  return Math.min(player.path.length, Math.max(0, (now - player.walkStartedAt) / STEP_MS));
+function hasRoomAt(isOpen: CellCheck, point: IslandPoint): boolean {
+  return CLEARANCE_OFFSETS.every((offset) => isOpen(cellOf({ x: point.x + offset.x, z: point.z + offset.z })));
 }
 
-function walkProgress(player: PlayerState, now: number): WalkProgress {
-  const steps = stepsAt(player, now);
-  const stepsDone = Math.floor(steps);
-  return { stepsDone, isMidStep: steps > stepsDone };
+/** True if the player can walk straight from one point to the other, keeping its clearance the whole way. */
+function isClearLine(isOpen: CellCheck, from: IslandPoint, to: IslandPoint): boolean {
+  const checks = Math.ceil(distanceBetween(from, to) / LINE_CHECK_STEP);
+  for (let i = 0; i <= checks; i++) {
+    const along = checks === 0 ? 0 : i / checks;
+    if (!hasRoomAt(isOpen, { x: from.x + (to.x - from.x) * along, z: from.z + (to.z - from.z) * along })) return false;
+  }
+  return true;
 }
 
-/** The cell after `steps` steps: the start cell at 0, then each cell of the path. */
-function cellAfter(player: PlayerState, steps: number): GridCell {
-  return player.path[steps - 1] ?? { x: player.x, z: player.z };
+type SightCheck = (from: IslandPoint, to: IslandPoint) => boolean;
+
+/** How many of the waypoints ahead to skip: the furthest one in a straight line from `anchor` is kept. */
+function waypointsToSkip(canSee: SightCheck, anchor: IslandPoint, ahead: IslandPoint[]): number {
+  for (let i = ahead.length - 1; i > 0; i--) {
+    const waypoint = ahead[i];
+    if (waypoint && canSee(anchor, waypoint)) return i;
+  }
+  return 0;
 }
 
-/** The cell the player has last reached at `now`. Mid-step, that is still the cell it is leaving. */
-export function playerCell(state: Pick<GameState, 'player'>, now: number): GridCell {
-  return cellAfter(state.player, walkProgress(state.player, now).stepsDone);
-}
-
-/** Where the player is at `now`, in cell units, moving at an even pace between cell centres. */
-export function playerPosition(state: Pick<GameState, 'player'>, now: number): GridCell {
-  const { player } = state;
-  const steps = stepsAt(player, now);
-  const leaving = cellAfter(player, Math.floor(steps));
-  const entering = cellAfter(player, Math.ceil(steps));
-  const fraction = steps - Math.floor(steps);
-  return { x: leaving.x + (entering.x - leaving.x) * fraction, z: leaving.z + (entering.z - leaving.z) * fraction };
-}
-
-export function isWalking(state: Pick<GameState, 'player'>, now: number): boolean {
-  return walkProgress(state.player, now).stepsDone < state.player.path.length;
-}
-
-/** Where a new walk starts from: the cell the player is on, or the one it is stepping into. */
-function walkOrigin(player: PlayerState, now: number): GridCell {
-  const { stepsDone, isMidStep } = walkProgress(player, now);
-  return cellAfter(player, isMidStep ? stepsDone + 1 : stepsDone);
+/** Cuts the corners of a cell-by-cell route: each leg goes straight to the furthest waypoint in sight. */
+function straightenRoute(isOpen: CellCheck, from: IslandPoint, waypoints: IslandPoint[]): IslandPoint[] {
+  const canSee: SightCheck = (start, end) => isClearLine(isOpen, start, end);
+  const route: IslandPoint[] = [];
+  let anchor = from;
+  let next = 0;
+  while (next < waypoints.length) {
+    const reached = next + waypointsToSkip(canSee, anchor, waypoints.slice(next));
+    anchor = waypoints[reached] ?? anchor;
+    route.push(anchor);
+    next = reached + 1;
+  }
+  return route;
 }
 
 /**
- * A walk to `to` from where the player is at `now`. Mid-step, the player finishes the step it is taking,
- * so the new walk keeps that step (and its start time) and continues from there. Undefined if unreachable.
+ * The route from one point to another, without `from`: straight lines at any angle, around walls and crops.
+ * Empty when already there; undefined if the point is off the island, blocked or unreachable.
  */
-export function walkTo(state: GameState, to: GridCell, now: number): PlayerState | undefined {
-  const { player } = state;
-  const { stepsDone, isMidStep } = walkProgress(player, now);
-  const path = findPath(state, walkOrigin(player, now), to);
-  if (!path) return undefined;
-  if (!isMidStep) return { ...playerCell(state, now), path, walkStartedAt: now };
-  const leaving = cellAfter(player, stepsDone);
-  const stepStartedAt = player.walkStartedAt + stepsDone * STEP_MS;
-  return { ...leaving, path: [cellAfter(player, stepsDone + 1), ...path], walkStartedAt: stepStartedAt };
+export function findPath(island: Island, from: IslandPoint, to: IslandPoint): IslandPoint[] | undefined {
+  const cells = findCellPath(island, cellOf(from), cellOf(to));
+  if (!cells) return undefined;
+  if (distanceBetween(from, to) === 0) return [];
+  // Through the centre of each cell on the way, then to the exact point in the last one.
+  const waypoints: IslandPoint[] = [...cells.slice(0, -1), to];
+  return straightenRoute(openCellCheck(island), from, waypoints);
 }

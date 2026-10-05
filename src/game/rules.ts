@@ -1,5 +1,6 @@
 import { CROPS, CROP_SLOTS, ISLAND_SIZE, PLAYER_SPAWN, STARTING_WALLS, getCrop, spinsRequired } from './config.ts';
-import { isNextToPlot, isWalking, playerCell, walkTo } from './path.ts';
+import { isNextToPlot } from './path.ts';
+import { isWalking, playerCell, walkTo } from './walk.ts';
 import { canPlace } from './placement.ts';
 import { canSpin, emptyWheel, resolveSpin } from './wheel.ts';
 import type { Action, CropDef, CropId, GameState, PlacedCrop } from './types.ts';
@@ -100,7 +101,7 @@ const applyHarvest: ActionHandler<'harvest'> = (state, action, now) => {
   return fillWheelSlot(harvested, plot.cropId);
 };
 
-/** Walking to the cell the player already stands on, while not walking, changes nothing. */
+/** Walking to the point the player already stands on, while not walking, changes nothing. */
 const applyMove: ActionHandler<'move'> = (state, action, now) => {
   const player = walkTo(state, { x: action.x, z: action.z }, now);
   if (!player) return state;

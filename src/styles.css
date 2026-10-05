@@ -19,7 +19,6 @@
   --tile-radius: 14px;
   --panel-radius: 16px;
   --hud-gap: var(--space-4);
-  --hotbar-height: calc(var(--tile-size) + 36px);
   --panel-width: 320px;
   --slide-ms: 250ms;
   font-family: ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif;
@@ -182,10 +181,10 @@ body {
   flex-direction: column;
   gap: var(--space-1);
   min-width: 180px;
-  /* Stops above the hotbar; on short screens the list scrolls. */
+  /* Stops above the bottom edge; on short screens the list scrolls. */
   max-height: calc(
     100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2 * var(--hud-gap) - var(--tile-size) -
-      var(--hotbar-height) - 2 * var(--space-2)
+      2 * var(--space-2)
   );
   overflow-y: auto;
   padding: var(--space-2);
@@ -250,79 +249,10 @@ body {
   padding: 6px 12px;
 }
 
-/* Bottom right: the crops as an inventory hotbar. */
-.crop-hotbar {
-  right: var(--hud-gap);
-  bottom: var(--hud-gap);
-  display: flex;
-  gap: var(--space-2);
-  padding: var(--space-2);
-}
-
-.crop-slot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: calc(var(--tile-size) + var(--space-4));
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
-}
-
-.slot-tile {
-  display: grid;
-  place-items: center;
-  width: var(--tile-size);
-  height: var(--tile-size);
-  border: 2px solid var(--paper-edge);
-  border-radius: var(--tile-radius);
-  background: white;
-}
-
-.slot-swatch {
-  width: 50%;
-  height: 50%;
-  border-radius: 50%;
-  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.15);
-}
-
-.slot-name {
-  max-width: 100%;
-  overflow: hidden;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 14px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.crop-slot.is-selected .slot-tile {
-  border-color: var(--accent);
-  background: var(--accent-tint);
-  box-shadow: 0 0 0 3px rgb(90 158 70 / 0.3);
-}
-
-.crop-slot.is-selected .slot-name {
-  color: var(--accent);
-}
-
-.crop-slot[aria-disabled='true'] {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.crop-slot[aria-disabled='true'] .slot-tile {
-  background: var(--locked);
-}
-
-/* Bottom centre, just above the hotbar row. Taps go through to the island. */
+/* Bottom centre. Taps go through to the island. */
 .hint-toast {
   left: 50%;
-  bottom: calc(var(--hud-gap) + var(--hotbar-height) + var(--space-2));
+  bottom: var(--hud-gap);
   transform: translateX(-50%);
   max-width: calc(100% - 2 * var(--hud-gap));
   padding: var(--space-2) var(--space-4);

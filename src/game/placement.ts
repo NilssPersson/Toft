@@ -1,5 +1,5 @@
 import { blockedCells, cellKey, cellsOf, isOnIsland, isSameCell } from './grid.ts';
-import { playerCell } from './path.ts';
+import { playerCell } from './walk.ts';
 import type { GameState, Placement } from './types.ts';
 
 type Island = Pick<GameState, 'crops' | 'islandSize' | 'walls' | 'player'>;
