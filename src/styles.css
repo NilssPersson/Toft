@@ -32,7 +32,8 @@
 
 html,
 body,
-#root {
+#root,
+.game {
   margin: 0;
   width: 100%;
   height: 100%;
@@ -494,7 +495,8 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .side-panel,
-  .side-panel.is-open {
+  .side-panel.is-open,
+  .progress-fill {
     transition: none;
   }
   .hint-toast {

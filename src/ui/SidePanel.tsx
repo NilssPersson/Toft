@@ -45,6 +45,7 @@ export function SidePanel(): ReactElement {
       className={`side-panel ${isOpen ? 'is-open' : ''}`}
       aria-labelledby="side-panel-title"
       inert={!isOpen}
+      data-state={isOpen ? 'open' : 'closed'}
     >
       <header className="side-panel-header">
         <h2 id="side-panel-title" className="visually-hidden">

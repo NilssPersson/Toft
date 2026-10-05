@@ -12,12 +12,16 @@ import {
 } from '../game/index.ts';
 import type { CropDef, SpinResult } from '../game/index.ts';
 import { spin, useStore } from '../state/store.ts';
+import { prefersReducedMotion } from './motion.ts';
 
 const RADIUS = 100;
 const SEGMENT_DEGREES = 360 / WHEEL_SPOTS;
 const SPIN_MS = 2600;
 const FULL_TURNS = 4;
 const DIMMED = 0.3;
+
+/** Exposed as data-state on the wheel, so tests can wait for a spin to finish. */
+type WheelPhase = 'idle' | 'spinning' | 'result';
 
 interface SegmentStyle {
   fill: string;
@@ -78,10 +82,28 @@ function describe(result: SpinResult): string {
   return result.leveledUp ? `${base} · Level up!` : base;
 }
 
+/** How long the wheel turns: no time at all with reduced motion. */
+function spinDuration(): number {
+  return prefersReducedMotion() ? 0 : SPIN_MS;
+}
+
+/** Runs `finish` once the wheel has stopped turning; straight away with reduced motion. */
+function whenSpinEnds(finish: () => void): void {
+  const duration = spinDuration();
+  if (duration === 0) finish();
+  else window.setTimeout(finish, duration);
+}
+
+function wheelPhase(isSpinning: boolean, shown: SpinResult | null): WheelPhase {
+  if (isSpinning) return 'spinning';
+  return shown ? 'result' : 'idle';
+}
+
 interface WheelSpin {
   rotation: number;
   isSpinning: boolean;
   shown: SpinResult | null;
+  phase: WheelPhase;
   /** The filled slots to draw: frozen at their pre-spin value while the wheel turns. */
   filled: boolean[];
   onSpin: () => void;
@@ -105,14 +127,15 @@ function useWheelSpin(): WheelSpin {
     if (!result) return;
     setRotation(rotation + spinDelta(rotation, result.spotIndex));
     setShown(null);
-    window.setTimeout(() => {
+    whenSpinEnds(() => {
       setFrozenFilled(null);
       setWheelSpinning(false);
       setShown(result);
-    }, SPIN_MS);
+    });
   };
 
-  return { rotation, isSpinning, shown, filled: frozenFilled ?? wheel.filled, onSpin };
+  const phase = wheelPhase(isSpinning, shown);
+  return { rotation, isSpinning, shown, phase, filled: frozenFilled ?? wheel.filled, onSpin };
 }
 
 function WheelSegment({ index, style }: { index: number; style: SegmentStyle }): ReactElement {
@@ -128,7 +151,13 @@ function WheelSegment({ index, style }: { index: number; style: SegmentStyle }):
   );
 }
 
-function WheelFace({ rotation, filled }: { rotation: number; filled: boolean[] }): ReactElement {
+interface WheelFaceProps {
+  rotation: number;
+  filled: boolean[];
+  phase: WheelPhase;
+}
+
+function WheelFace({ rotation, filled, phase }: WheelFaceProps): ReactElement {
   const level = useStore((state) => state.game.progression.level);
   const context: SegmentContext = { crops: unlockedCrops(level), filled, level };
   return (
@@ -138,7 +167,10 @@ function WheelFace({ rotation, filled }: { rotation: number; filled: boolean[] }
         <svg
           viewBox={`0 0 ${RADIUS * 2} ${RADIUS * 2}`}
           className="wheel"
-          style={{ transform: `rotate(${rotation}deg)`, transitionDuration: `${SPIN_MS}ms` }}
+          role="img"
+          aria-label="Wheel"
+          data-state={phase}
+          style={{ transform: `rotate(${rotation}deg)`, transitionDuration: `${spinDuration()}ms` }}
         >
           {Array.from({ length: WHEEL_SPOTS }, (_, i) => (
             <WheelSegment key={i} index={i} style={segmentStyle(i, context)} />
@@ -161,10 +193,10 @@ function SpinButton({ isSpinning, onSpin }: { isSpinning: boolean; onSpin: () =>
 
 /** The wheel, its Spin button and the last result, laid out by the side panel. The wheel scales to fit its area. */
 export function Wheel(): ReactElement {
-  const { rotation, isSpinning, shown, filled, onSpin } = useWheelSpin();
+  const { rotation, isSpinning, shown, phase, filled, onSpin } = useWheelSpin();
   return (
     <>
-      <WheelFace rotation={rotation} filled={filled} />
+      <WheelFace rotation={rotation} filled={filled} phase={phase} />
       <SpinButton isSpinning={isSpinning} onSpin={onSpin} />
       <p className="spin-result" role="status">
         {shown ? describe(shown) : ' '}

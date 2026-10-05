@@ -1,4 +1,7 @@
 dist/
+dist-e2e/
+playwright-report/
+test-results/
 .astro/
 .wrangler/
 coverage/

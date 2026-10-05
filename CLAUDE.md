@@ -48,10 +48,29 @@ Cosy 3D farming game. Astro site (static output) with the game on `/play`: React
 - **Named constants.** Magic numbers and colours get a `SCREAMING_CASE` name at the top of the file; game tuning still goes in `src/game/config.ts`.
 - **Formatting is Prettier's job** (120 columns, single quotes). Don't hand-format; run `npm run format`.
 
+## Testing
+
+Three levels. Prefer the lowest one that can catch the bug.
+
+- **Rules → unit** (`src/**/*.test.ts`, Vitest, node). Pure functions in `src/game`.
+- **HUD behaviour → component** (`src/**/*.test.tsx`, Vitest, jsdom, Testing Library). Query by role and label; set state with `useStore.setState` and control `now`/`roll` with `setSources` from `src/state/clock.ts`. To control a HUD timer, use `vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })` with `userEvent.setup({ advanceTimers })` (see `src/ui/Hud.test.tsx`).
+- **Whole flows and layout → e2e** (`e2e/*.spec.ts`, Playwright, desktop and phone-landscape). Start every test with `await gotoGame(page)` from `e2e/game.ts`; see `e2e/README.md`.
+
+Rules:
+
+- Run `npm test` (unit and component) and `npm run e2e`. **Never start a server yourself for e2e**: Playwright builds the test build into `dist-e2e/`, serves it, waits for it and shuts it down. `npm run e2e:ui` is for local debugging.
+- **Never sleep or use fixed timeouts.** Wait on `data-ready` / `data-state`, Playwright's web-first assertions (`await expect(locator).toHave…`) and Testing Library's `findBy*`. Lint blocks `waitForTimeout`, `networkidle`, `force` and `setTimeout` in tests.
+- The app announces its state: the game root has `data-testid="game"` and `data-ready="true"` after the first frame; the wheel has `data-state="idle" | "spinning" | "result"`, the side panel `data-state="open" | "closed"`. Anything new that animates or changes asynchronously gets a `data-state` too, and finishes at once under `prefers-reduced-motion: reduce` (e2e runs with it).
+- Every interactive HUD element has an accessible name; tests use `getByRole`/`getByLabel`. `data-testid` is only for things with no role.
+- **Set up state with `window.__toft`, not by playing through the canvas**, and never click canvas coordinates. The hook (`src/testing/testHook.ts`) has `getState`, `loadState`, `advanceTime`, `setNextRoll`, `now`, `isCropReady` and `dispatch`. It exists only in test builds (`PUBLIC_TEST_HOOKS=true`, dynamic import); `npm run build` fails if `__toft` reaches `dist/`.
+- **Control time with `advanceTime`, not `page.clock`.** `page.clock` also fakes `requestAnimationFrame`, which freezes the R3F render loop. `advanceTime` only moves the clock the store passes to the rules as `now`.
+- When an e2e test fails, read the error and the trace in `test-results/` (`npx playwright show-trace <path>/trace.zip`) before changing anything. Don't add retries or longer timeouts to make it pass.
+- In Claude cloud sessions, Chromium is preinstalled at `/opt/pw-browsers`; if it doesn't match the pinned Playwright version, run with `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium`. Never run `playwright install` there. CI installs its own browser.
+
 ## Checks
 
-`npm run lint` · `npm run format:check` · `npm test` · `npm run typecheck` (`astro check`) · `npm run build` (runs the type check first)
+`npm run lint` · `npm run format:check` · `npm test` · `npm run typecheck` (`astro check`) · `npm run build` (runs the type check first and the `dist/` test-hook check after) · `npm run e2e`
 
-CI runs lint, the format check, tests and the build, in that order. `npm run format` fixes formatting.
+CI's "Test and build" job runs lint, the format check, tests and the build, in that order; a separate "E2E" job runs Playwright and uploads the report and traces on failure. `npm run format` fixes formatting.
 
-Vitest uses Astro's Vite config via `getViteConfig` in `vitest.config.ts`.
+Vitest uses Astro's Vite config via `getViteConfig` in `vitest.config.ts`, with two projects: `unit` and `components`.
