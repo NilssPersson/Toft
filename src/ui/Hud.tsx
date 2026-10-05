@@ -1,99 +1,59 @@
 import { useEffect } from 'react';
 import type { ReactElement } from 'react';
-import { spinsRequired, unlockedCrops } from '../game/index.ts';
-import type { CropDef } from '../game/index.ts';
 import { useStore } from '../state/store.ts';
+import { BuyMenu } from './BuyMenu.tsx';
+import { CropHotbar } from './CropHotbar.tsx';
 import { FullscreenButton, useFullscreenOnFirstInteraction } from './Fullscreen.tsx';
+import { HintToast } from './HintToast.tsx';
+import { LevelChip } from './LevelChip.tsx';
+import { SettingsMenu } from './SettingsMenu.tsx';
+import { SidePanel } from './SidePanel.tsx';
+import { StarButton } from './StarButton.tsx';
 import { UpdatePrompt } from './UpdatePrompt.tsx';
-import { Wheel } from './Wheel.tsx';
 
-/** Esc stops placing the selected crop. */
-function useEscapeToDeselect(): void {
+/** Esc stops placing the selected crop and closes the side panel (unless the wheel is turning). */
+function useEscape(): void {
   const selectCrop = useStore((state) => state.selectCrop);
+  const closePanel = useStore((state) => state.closePanel);
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') selectCrop(null);
+      if (event.key !== 'Escape') return;
+      selectCrop(null);
+      closePanel();
     };
     window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('keydown', onKey);
     };
-  }, [selectCrop]);
+  }, [selectCrop, closePanel]);
 }
 
-function LevelPanel(): ReactElement {
-  const { level, spinsRemaining } = useStore((state) => state.game.progression);
-  const required = spinsRequired(level);
-  const wins = required - spinsRemaining;
+function SystemButtons(): ReactElement {
   return (
-    <div className="panel level-panel">
-      <div className="level">Level {level}</div>
-      <div className="progress">
-        <div className="progress-fill" style={{ width: `${(wins / required) * 100}%` }} />
+    <div className="hud-top-right">
+      <div className="tile-row">
+        <BuyMenu />
+        <FullscreenButton />
+        <SettingsMenu />
       </div>
-      <div className="progress-label">
-        {wins} / {required} wins
-      </div>
-    </div>
-  );
-}
-
-function CropButton({ crop }: { crop: CropDef }): ReactElement {
-  const selected = useStore((state) => state.selectedCrop);
-  const selectCrop = useStore((state) => state.selectCrop);
-  const isSelected = selected === crop.id;
-  return (
-    <button
-      className={`crop-button ${isSelected ? 'selected' : ''}`}
-      onClick={() => selectCrop(isSelected ? null : crop.id)}
-    >
-      <span className="swatch" style={{ background: crop.color }} />
-      {crop.name}
-      <small>
-        {crop.footprint.w}×{crop.footprint.d} · {crop.growSeconds}s
-      </small>
-    </button>
-  );
-}
-
-function NewIslandButton(): ReactElement {
-  const reset = useStore((state) => state.reset);
-  const onClick = (): void => {
-    if (window.confirm('Start a fresh island? This clears your save.')) reset();
-  };
-  return (
-    <button className="reset-save" onClick={onClick}>
-      New island
-    </button>
-  );
-}
-
-function CropPalette(): ReactElement {
-  const level = useStore((state) => state.game.progression.level);
-  const isPlacing = useStore((state) => state.selectedCrop !== null);
-  return (
-    <div className="panel palette">
-      {unlockedCrops(level).map((crop) => (
-        <CropButton key={crop.id} crop={crop} />
-      ))}
-      <span className="hint">
-        {isPlacing ? 'Click the island to plant · Esc to stop' : 'Pick a crop · click blue to water, yellow to harvest'}
-      </span>
-      <NewIslandButton />
-    </div>
-  );
-}
-
-export function Hud(): ReactElement {
-  useEscapeToDeselect();
-  useFullscreenOnFirstInteraction();
-  return (
-    <div className="hud">
-      <LevelPanel />
-      <FullscreenButton />
       <UpdatePrompt />
-      <Wheel />
-      <CropPalette />
+    </div>
+  );
+}
+
+/** Lays the HUD out along the screen edges, leaving the middle to the island. */
+export function Hud(): ReactElement {
+  useEscape();
+  useFullscreenOnFirstInteraction();
+  const isPanelOpen = useStore((state) => state.isPanelOpen);
+  return (
+    <div className={`hud ${isPanelOpen ? 'is-panel-open' : ''}`}>
+      <SidePanel />
+      <LevelChip />
+      <SystemButtons />
+      <StarButton />
+      <HintToast />
+      <CropHotbar />
     </div>
   );
 }

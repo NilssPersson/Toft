@@ -18,6 +18,13 @@ interface StoreState {
 
   selectedCrop: CropId | null;
   selectCrop: (id: CropId | null) => void;
+
+  /** The side panel with the wheel. It stays open while the wheel turns. */
+  isPanelOpen: boolean;
+  isWheelSpinning: boolean;
+  togglePanel: () => void;
+  closePanel: () => void;
+  setWheelSpinning: (isSpinning: boolean) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -32,6 +39,16 @@ export const useStore = create<StoreState>()(
 
       selectedCrop: null,
       selectCrop: (id) => set({ selectedCrop: id }),
+
+      isPanelOpen: false,
+      isWheelSpinning: false,
+      togglePanel: () => {
+        if (!get().isWheelSpinning) set({ isPanelOpen: !get().isPanelOpen });
+      },
+      closePanel: () => {
+        if (!get().isWheelSpinning) set({ isPanelOpen: false });
+      },
+      setWheelSpinning: (isSpinning) => set({ isWheelSpinning: isSpinning }),
     }),
     {
       name: 'toft-save',
