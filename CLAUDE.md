@@ -67,6 +67,14 @@ Rules:
 - When an e2e test fails, read the error and the trace in `test-results/` (`npx playwright show-trace <path>/trace.zip`) before changing anything. Don't add retries or longer timeouts to make it pass.
 - In Claude cloud sessions, Chromium is preinstalled at `/opt/pw-browsers`; if it doesn't match the pinned Playwright version, run with `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium`. Never run `playwright install` there. CI installs its own browser.
 
+## Pull requests
+
+- **Every agent PR includes a note** in `docs/agent-notes/` about friction in the workflow, so this file, the lint rules, scripts and skills can be improved. Name it `YYYY-MM-DD-<branch without claude/ and any random suffix>.md` and copy `_template.md`; `docs/agent-notes/README.md` has the format and what each heading means.
+- Note rules: only concrete items, each with evidence (file, command, error message or rule name); "None" under an empty heading; short bullets; no advice, praise or summary of the PR; even small PRs get one.
+- Order: the note is the last commit, after all checks pass, with `pr:` empty. Open the PR, with its description linking to the note. Then fill in `pr:` in a small follow-up commit.
+- Never edit another PR's note. Only the separate review changes `status` (`new` → `reviewed`).
+- PR descriptions follow `.github/pull_request_template.md` (Summary, How to test, Checks run, Agent notes). PRs opened through the API don't get the template automatically, so copy its headings.
+
 ## Checks
 
 `npm run lint` · `npm run format:check` · `npm test` · `npm run typecheck` (`astro check`) · `npm run build` (runs the type check first and the `dist/` test-hook check after) · `npm run e2e`
