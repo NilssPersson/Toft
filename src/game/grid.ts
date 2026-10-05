@@ -1,35 +1,37 @@
 import { getCrop } from './config.ts';
-import type { GameState, PlacedCrop, Placement } from './types.ts';
+import type { GameState, GridCell, PlacedCrop, Placement } from './types.ts';
 
-type Cell = [number, number];
-
-export function cellsOf({ x, z, footprint }: Placement): Cell[] {
-  const cells: Cell[] = [];
+export function cellsOf({ x, z, footprint }: Placement): GridCell[] {
+  const cells: GridCell[] = [];
   for (let dx = 0; dx < footprint.w; dx++) {
-    for (let dz = 0; dz < footprint.d; dz++) cells.push([x + dx, z + dz]);
+    for (let dz = 0; dz < footprint.d; dz++) cells.push({ x: x + dx, z: z + dz });
   }
   return cells;
 }
 
-function cellKey([cellX, cellZ]: Cell): string {
-  return `${cellX},${cellZ}`;
+export function plotCells(plot: PlacedCrop): GridCell[] {
+  return cellsOf({ x: plot.x, z: plot.z, footprint: getCrop(plot.cropId).footprint });
+}
+
+export function cellKey({ x, z }: GridCell): string {
+  return `${x},${z}`;
+}
+
+export function isSameCell(first: GridCell, second: GridCell): boolean {
+  return first.x === second.x && first.z === second.z;
 }
 
 export function occupiedCells(crops: PlacedCrop[]): Set<string> {
-  const taken = new Set<string>();
-  for (const plot of crops) {
-    const placement = { x: plot.x, z: plot.z, footprint: getCrop(plot.cropId).footprint };
-    for (const cell of cellsOf(placement)) taken.add(cellKey(cell));
-  }
-  return taken;
+  return new Set(crops.flatMap(plotCells).map(cellKey));
 }
 
-function isOnIsland([cellX, cellZ]: Cell, islandSize: number): boolean {
-  return cellX >= 0 && cellZ >= 0 && cellX < islandSize && cellZ < islandSize;
+/** Cells taken by a crop or a wall: nothing can be placed on them or walk through them. */
+export function blockedCells(island: Pick<GameState, 'crops' | 'walls'>): Set<string> {
+  const blocked = occupiedCells(island.crops);
+  for (const wall of island.walls) blocked.add(cellKey(wall));
+  return blocked;
 }
 
-/** True if the placement fits on the island without overlapping another crop. */
-export function canPlace(island: Pick<GameState, 'crops' | 'islandSize'>, placement: Placement): boolean {
-  const taken = occupiedCells(island.crops);
-  return cellsOf(placement).every((cell) => isOnIsland(cell, island.islandSize) && !taken.has(cellKey(cell)));
+export function isOnIsland({ x, z }: GridCell, islandSize: number): boolean {
+  return x >= 0 && z >= 0 && x < islandSize && z < islandSize;
 }

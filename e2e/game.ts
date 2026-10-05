@@ -3,7 +3,7 @@
 import { expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { WHEEL_SPOTS } from '../src/game/index.ts';
-import type { Action, GameState } from '../src/game/index.ts';
+import type { Action, GameState, GridCell } from '../src/game/index.ts';
 import type {} from '../src/testing/testHook.ts';
 
 /** The welcome toast is UI state in localStorage; marking it seen keeps it out of every test. */
@@ -59,4 +59,13 @@ export async function isCropReady(page: Page, uid: string): Promise<boolean> {
 /** Does what a click on the island would, without clicking canvas coordinates. */
 export async function dispatch(page: Page, action: Action): Promise<void> {
   await page.evaluate((gameAction) => window.__toft?.dispatch(gameAction), action);
+}
+
+export async function playerCell(page: Page): Promise<GridCell | undefined> {
+  return page.evaluate(() => window.__toft?.playerCell());
+}
+
+/** Does what a click on a crop would: the player walks next to it, then waters or harvests it. */
+export async function clickCrop(page: Page, uid: string): Promise<void> {
+  await page.evaluate((plotUid) => window.__toft?.clickCrop(plotUid), uid);
 }

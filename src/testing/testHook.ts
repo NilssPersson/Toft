@@ -1,8 +1,9 @@
 // window.__toft: lets e2e tests set up state and control time and randomness without playing through the canvas.
 // Loaded only in test builds (PUBLIC_TEST_HOOKS=true, see App.tsx); `npm run build` fails if it reaches dist/.
-import { initialState, isReady } from '../game/index.ts';
-import type { Action, GameState } from '../game/index.ts';
+import { initialState, isReady, playerCell } from '../game/index.ts';
+import type { Action, GameState, GridCell } from '../game/index.ts';
 import { setSources } from '../state/clock.ts';
+import { walkToCrop } from '../state/interaction.ts';
 import { useStore } from '../state/store.ts';
 
 export interface TestHook {
@@ -19,6 +20,10 @@ export interface TestHook {
   isCropReady: (uid: string) => boolean;
   /** Stands in for a click on the island, which tests never do by coordinates. */
   dispatch: (action: Action) => void;
+  /** The cell the player stands on (or last reached, while walking) on that clock. */
+  playerCell: () => GridCell;
+  /** Stands in for a click on a crop: the player walks next to it, then waters or harvests it. */
+  clickCrop: (uid: string) => void;
 }
 
 declare global {
@@ -46,7 +51,7 @@ function isCropReady(uid: string): boolean {
 const TEST_HOOK: TestHook = {
   getState: () => useStore.getState().game,
   loadState: (partial) => {
-    useStore.setState({ game: { ...initialState(), ...partial } });
+    useStore.setState({ game: { ...initialState(), ...partial }, pendingCropUid: null });
   },
   advanceTime: (ms) => {
     offsetMs += ms;
@@ -59,6 +64,8 @@ const TEST_HOOK: TestHook = {
   dispatch: (action) => {
     useStore.getState().dispatch(action);
   },
+  playerCell: () => playerCell(useStore.getState().game, testNow()),
+  clickCrop: walkToCrop,
 };
 
 export function installTestHook(): void {
