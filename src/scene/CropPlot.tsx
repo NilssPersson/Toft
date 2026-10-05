@@ -5,6 +5,7 @@ import type { ThreeEvent } from '@react-three/fiber';
 import type { Group, Mesh, MeshStandardMaterial } from 'three';
 import { getCrop, growthProgress, isReady } from '../game/index.ts';
 import type { Action, CropDef, PlacedCrop } from '../game/index.ts';
+import { now } from '../state/clock.ts';
 import { useStore } from '../state/store.ts';
 import { footprintCenter } from './coords.ts';
 
@@ -41,7 +42,7 @@ function usePlotAnimation(plot: PlacedCrop): { plant: RefObject<Group | null>; m
   const plant = useRef<Group>(null);
   const marker = useRef<Mesh>(null);
   useFrame(({ clock }) => {
-    const frame = { now: Date.now(), elapsed: clock.elapsedTime };
+    const frame = { now: now(), elapsed: clock.elapsedTime };
     if (plant.current) animatePlant(plant.current, plot, frame);
     if (marker.current) animateMarker(marker.current, plot, frame);
   });
@@ -83,7 +84,7 @@ export function CropPlot({ plot, islandSize }: CropPlotProps): ReactElement {
 
   const onClick = (event: ThreeEvent<MouseEvent>): void => {
     event.stopPropagation();
-    const action = plotAction(plot, Date.now());
+    const action = plotAction(plot, now());
     if (action) dispatch(action);
   };
 

@@ -2,6 +2,7 @@
 import js from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import astro from 'eslint-plugin-astro';
+import playwright from 'eslint-plugin-playwright';
 import prettier from 'eslint-config-prettier';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
@@ -44,8 +45,40 @@ const BROWSER_GLOBALS = [
   'requestAnimationFrame',
 ].map((name) => ({ name, message: 'src/game is pure: no browser APIs or timers.' }));
 
+/** Tests wait on app state, never on the clock. */
+const NO_SLEEP_MESSAGE = 'Never sleep in tests: wait with findBy*/waitFor, or use fake timers to control time.';
+const TIMER_GLOBALS = ['setTimeout', 'setInterval'].map((name) => ({ name, message: NO_SLEEP_MESSAGE }));
+const TIMER_PROPERTIES = ['window', 'globalThis'].flatMap((object) =>
+  ['setTimeout', 'setInterval'].map((property) => ({ object, property, message: NO_SLEEP_MESSAGE })),
+);
+
+/** Playwright rules that forbid fixed waits and other sources of flakiness, as errors. */
+const PLAYWRIGHT_NO_FLAKE_RULES = Object.fromEntries(
+  [
+    'no-wait-for-timeout',
+    'no-networkidle',
+    'no-force-option',
+    'prefer-web-first-assertions',
+    'no-element-handle',
+    'no-eval',
+    'no-page-pause',
+    'missing-playwright-await',
+  ].map((rule) => [`playwright/${rule}`, 'error']),
+);
+
 export default defineConfig(
-  { ignores: ['dist/', '.astro/', '.wrangler/', 'node_modules/', 'coverage/'] },
+  {
+    ignores: [
+      'dist/',
+      'dist-e2e/',
+      'playwright-report/',
+      'test-results/',
+      '.astro/',
+      '.wrangler/',
+      'node_modules/',
+      'coverage/',
+    ],
+  },
 
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -153,7 +186,7 @@ export default defineConfig(
 
   // Tests: exempt from the size rules, and may use real time and randomness.
   {
-    files: ['**/*.test.ts'],
+    files: ['**/*.test.ts', '**/*.test.tsx', 'e2e/**/*.spec.ts'],
     rules: {
       'max-lines-per-function': 'off',
       complexity: 'off',
@@ -163,6 +196,22 @@ export default defineConfig(
       'no-restricted-properties': 'off',
       'no-restricted-syntax': 'off',
     },
+  },
+
+  // Component tests: no sleeping on timers.
+  {
+    files: ['**/*.test.tsx'],
+    rules: {
+      'no-restricted-globals': ['error', ...TIMER_GLOBALS],
+      'no-restricted-properties': ['error', ...TIMER_PROPERTIES],
+    },
+  },
+
+  // E2E tests: Playwright's recommended rules, with every kind of fixed wait an error.
+  {
+    files: ['e2e/**/*.ts'],
+    ...playwright.configs['flat/recommended'],
+    rules: { ...playwright.configs['flat/recommended'].rules, ...PLAYWRIGHT_NO_FLAKE_RULES },
   },
 
   prettier,
