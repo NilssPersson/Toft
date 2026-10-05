@@ -1,7 +1,7 @@
 ---
 date: 2026-10-05
 branch: claude/free-walk-follow-camera
-pr:
+pr: 11
 status: new
 ---
 
