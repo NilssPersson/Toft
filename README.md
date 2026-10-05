@@ -20,6 +20,7 @@ npm run dev        # http://localhost:4321
 | `npm run typecheck` | Type check (`astro check`, covers `.astro`, `.ts` and `.tsx`) |
 | `npm run build`     | Type check, then static build to `dist/`                      |
 | `npm run preview`   | Serve the built `dist/` locally                               |
+| `npm run icons`     | Regenerate the app icons in `public/` from the favicon        |
 
 ## Pages
 
@@ -34,6 +35,30 @@ npm run dev        # http://localhost:4321
 Marketing pages ship no JavaScript. Only `/play` loads React, three.js and the store. A sitemap is generated at `/sitemap-index.xml`.
 
 To write a blog post, add `src/content/blog/<slug>.md` with `title`, `description` and `pubDate` in the frontmatter.
+
+## Installing as an app (PWA)
+
+Toft is a Progressive Web App. Installed, it opens straight into `/play` in fullscreen, and after the first visit the game works offline.
+
+- **Desktop Chrome / Edge:** open the site and click the install icon in the address bar (or menu → _Install Toft_).
+- **Android (Chrome):** menu → _Install app_ (or _Add to Home screen_).
+- **iPhone / iPad (Safari):** Share → _Add to Home Screen_.
+
+In a normal browser tab, `/play` goes fullscreen on the first click, tap or key press, and the button at the top right of the HUD toggles it. **On iPhone, Safari has no Fullscreen API**, so the button is hidden there; the only way to play fullscreen on iPhone is Add to Home Screen.
+
+How it fits together:
+
+- `public/manifest.webmanifest` describes the app (start URL `/play`, `display: fullscreen` with `standalone` as the fallback). `src/layouts/Base.astro` links it from every page, so any page can be installed. These are only tags; marketing pages still ship no JS.
+- The service worker (`dist/sw.js`) is generated with Workbox by `integrations/serviceWorker.ts` after the build. It precaches `/play` and the files it loads, and fetches every other page network-first, so blog and marketing content is never stale.
+- Only `/play` registers the service worker (`src/pwa/serviceWorker.ts`, part of the game bundle).
+- A new version never reloads the game. It waits until Toft is next launched, or the player taps _Restart_ on the "Update available" prompt. The save lives in `localStorage` and survives updates.
+- `public/_headers` makes Cloudflare revalidate `/sw.js` and the manifest on every load, and cache the hashed files in `/_astro/` forever.
+
+`@vite-pwa/astro` isn't used because it only supports Astro up to version 5.
+
+### Regenerating the icons
+
+The icons in `public/` (`pwa-192x192.png`, `pwa-512x512.png`, `maskable-icon-512x512.png`, `apple-touch-icon-180x180.png`, `favicon.ico`) are placeholders generated from `public/favicon.svg` by `@vite-pwa/assets-generator`. To use real art, replace `public/favicon.svg` (or point `images` in `pwa-assets.config.ts` at another file) and run `npm run icons`. The background colour of the maskable and Apple icons is set in the same config.
 
 ## Deploying
 
@@ -68,13 +93,15 @@ src/
   content/  Blog posts (Markdown). Schema in src/content.config.ts.
   site/     Site constants (name, URL, contact) and marketing-page CSS.
   Game.tsx  Game entry point, mounted by /play. App.tsx is the game root.
+  pwa/      Service worker registration and fullscreen helpers, used only by /play.
   game/     Pure game rules: types, config/tuning, grid, wheel, rules + tests.
             No React, no Three.js, no clock or randomness.
   state/    zustand store: the only bridge between rules and app (dispatch(action)).
   scene/    3D world (R3F): island, crop plots, camera, lights.
   ui/       HTML overlay: level bar, wheel, crop palette.
   styles.css  Game styles, loaded only by /play.
-public/     Static files copied as-is (favicon).
+public/     Static files copied as-is: favicon, app icons, web app manifest, Cloudflare _headers.
+integrations/  Build step that generates the service worker (dist/sw.js) with Workbox.
 ```
 
 See [DESIGN.md](DESIGN.md) for the game design and open questions, and [CLAUDE.md](CLAUDE.md) for architecture rules.

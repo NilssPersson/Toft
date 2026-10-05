@@ -15,6 +15,7 @@ const GAME_APP_IMPORTS = [
   { regex: '^@react-three/', message: '@react-three belongs to the game on /play only.' },
   { regex: '^zustand(/|$)', message: 'The store belongs to the game on /play only.' },
   { regex: '(^|/)(state|scene|ui)/', message: 'Game code stays on /play.' },
+  { regex: '(^|/)pwa/|^workbox-window$', message: 'The service worker is registered only from /play.' },
   { regex: '(^|/)(App|Game)\\.tsx$', message: 'Game code stays on /play.' },
 ];
 

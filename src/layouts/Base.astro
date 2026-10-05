@@ -1,15 +1,20 @@
 ---
-// Document shell shared by every page: SEO and Open Graph tags, favicon.
+// Document shell shared by every page: SEO and Open Graph tags, favicon, web app manifest.
 // Pages pick Page.astro (site chrome) or use this directly (the game).
+// Only tags here: the service worker is registered by the game on /play, never from this layout.
 import { SITE } from '../site/config.ts';
 
 interface Props {
   title?: string;
   description?: string;
   type?: 'website' | 'article';
+  viewport?: string;
 }
 
-const { title, description = SITE.description, type = 'website' } = Astro.props;
+const THEME_COLOR = '#5a9e46';
+const DEFAULT_VIEWPORT = 'width=device-width, initial-scale=1';
+
+const { title, description = SITE.description, type = 'website', viewport = DEFAULT_VIEWPORT } = Astro.props;
 const fullTitle = title ? `${title} · ${SITE.name}` : `${SITE.name} — a cosy farming game`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
@@ -18,11 +23,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content={viewport} />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content={THEME_COLOR} />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <meta property="og:type" content={type} />
