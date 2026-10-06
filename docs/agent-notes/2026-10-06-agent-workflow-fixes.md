@@ -1,7 +1,7 @@
 ---
 date: 2026-10-06
 branch: claude/agent-workflow-fixes
-pr:
+pr: 17
 status: new
 ---
 
