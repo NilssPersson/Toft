@@ -106,3 +106,36 @@ export async function saveScreenshot(page: Page, testInfo: TestInfo, name: strin
   await page.screenshot({ path });
   await testInfo.attach(name, { path, contentType: 'image/png' });
 }
+
+/** Enough wheel steps to zoom from closest to farthest: each step zooms by a fixed factor, whatever its delta. */
+const ZOOM_OUT_STEPS = 40;
+const WHEEL_DELTA_Y = 100;
+
+/** Zooms the camera out as far as it goes, so a screenshot shows the whole island. Scrolls, never clicks the canvas. */
+export async function zoomOutFully(page: Page): Promise<void> {
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('The page has no viewport');
+  await page.mouse.move(viewport.width / 2, viewport.height / 2);
+  for (let i = 0; i < ZOOM_OUT_STEPS; i++) {
+    await page.mouse.wheel(0, WHEEL_DELTA_Y);
+  }
+}
+
+/** The time between `count` consecutive rendered frames, in ms, measured in the browser with requestAnimationFrame. */
+export async function measureFrameTimes(page: Page, count: number): Promise<number[]> {
+  return page.evaluate(
+    (frameCount) =>
+      new Promise<number[]>((resolve) => {
+        const deltas: number[] = [];
+        let previous: number | undefined;
+        function onFrame(time: number): void {
+          if (previous !== undefined) deltas.push(time - previous);
+          previous = time;
+          if (deltas.length < frameCount) requestAnimationFrame(onFrame);
+          else resolve(deltas);
+        }
+        requestAnimationFrame(onFrame);
+      }),
+    count,
+  );
+}
