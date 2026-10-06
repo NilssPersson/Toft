@@ -25,7 +25,7 @@ export interface OceanConfig {
 
 export const OCEAN: OceanConfig = {
   size: 200,
-  segments: 96,
+  segments: 32,
   level: -0.6,
   colors: {
     shallow: '#86d9d4',
