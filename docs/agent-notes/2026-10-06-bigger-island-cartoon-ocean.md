@@ -9,7 +9,8 @@ status: new
 
 ## Got stuck on
 
-- None
+- CI E2E failed `e2e/player.spec.ts` "harvests it" (desktop twice, phone once) but it passed 12/12 locally. Cause: the test advanced `path.length * STEP_MS` (2 waypoints, 0.5 s) for a 4.41-cell walk, so it depended on real time plus a frame. Now advances by route length. The CI trace couldn't be read: the artifact host `productionresultssa1.blob.core.windows.net` is denied by the session proxy.
+- CI uses Chromium v1243; the session has v1194 at `/opt/pw-browsers`, so local runs are not the CI browser.
 
 ## Guessed
 
