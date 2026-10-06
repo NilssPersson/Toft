@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { applyAction, initialState, isReady } from './rules.ts';
-import { CROP_SLOTS, MULTIPLIER_SPOT, RESET_SPOT, WHEEL_SPOTS, multiplierBonus, spinsRequired } from './config.ts';
+import {
+  CROP_SLOTS,
+  ISLAND_SIZE,
+  MULTIPLIER_SPOT,
+  RESET_SPOT,
+  WHEEL_SPOTS,
+  multiplierBonus,
+  spinsRequired,
+} from './config.ts';
 import { canPlace } from './placement.ts';
 import type { GameState, PlacedCrop } from './types.ts';
 
@@ -29,7 +37,7 @@ describe('grid', () => {
   it('rejects out-of-bounds and overlapping placements', () => {
     const state = applyAction(initialState(), { type: 'place', cropId: 'carrot', x: 0, z: 0 }, 0);
     expect(canPlace(state, { x: 0, z: 0, footprint: { w: 1, d: 1 } }, 0)).toBe(false);
-    expect(canPlace(state, { x: 11, z: 11, footprint: { w: 1, d: 2 } }, 0)).toBe(false);
+    expect(canPlace(state, { x: ISLAND_SIZE - 1, z: ISLAND_SIZE - 1, footprint: { w: 1, d: 2 } }, 0)).toBe(false);
     expect(canPlace(state, { x: 1, z: 0, footprint: { w: 1, d: 1 } }, 0)).toBe(true);
   });
 

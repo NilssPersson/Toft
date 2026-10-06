@@ -1,6 +1,10 @@
 import type { ReactElement } from 'react';
 import { FollowCamera } from './FollowCamera.tsx';
 import { Island } from './Island.tsx';
+import { Ocean } from './ocean/Ocean.tsx';
+
+/** Half the width the sun's shadows cover: the whole island and a little past it. */
+const SHADOW_REACH = 12;
 
 export function GameScene(): ReactElement {
   return (
@@ -12,17 +16,13 @@ export function GameScene(): ReactElement {
         intensity={1.6}
         castShadow
         shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
+        shadow-camera-left={-SHADOW_REACH}
+        shadow-camera-right={SHADOW_REACH}
+        shadow-camera-top={SHADOW_REACH}
+        shadow-camera-bottom={-SHADOW_REACH}
       />
 
-      {/* Sea */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.6, 0]}>
-        <planeGeometry args={[200, 200]} />
-        <meshStandardMaterial color="#5fb2cf" />
-      </mesh>
+      <Ocean />
 
       <Island />
 

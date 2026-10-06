@@ -6,7 +6,7 @@ import { advanceTime, clickCrop, dispatch, gameNow, getState, gotoGame, loadStat
 const STEP_MS = 1000 / WALK_CELLS_PER_SECOND;
 const STANDING_AT_SPAWN = { ...PLAYER_SPAWN, path: [], walkStartedAt: 0 };
 /** The middle of the island, on the far side of the starting wall from the spawn cell. */
-const MIDDLE: GridCell = { x: 6, z: 6 };
+const MIDDLE: GridCell = { x: 8, z: 8 };
 /** Around the wall to the middle one cell at a time; the real route is shorter. */
 const CELL_BY_CELL_STEPS = 6;
 /** The length of a 1.5 by 2 diagonal. */

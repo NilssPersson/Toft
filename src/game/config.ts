@@ -2,10 +2,10 @@ import type { CropDef, GridCell } from './types.ts';
 
 /** Tuning lives here so balancing never touches rule code. */
 
-export const ISLAND_SIZE = 12;
+export const ISLAND_SIZE = 16;
 
 /** Where a new player stands. */
-export const PLAYER_SPAWN: GridCell = { x: 2, z: 6 };
+export const PLAYER_SPAWN: GridCell = { x: 4, z: 8 };
 
 export const WALK_CELLS_PER_SECOND = 4;
 
@@ -13,7 +13,7 @@ export const WALK_CELLS_PER_SECOND = 4;
 export const PLAYER_CLEARANCE = 0.3;
 
 /** Between the spawn cell and the middle of the island, so the first walk there goes around it. */
-export const STARTING_WALLS: GridCell[] = [{ x: 4, z: 6 }];
+export const STARTING_WALLS: GridCell[] = [{ x: 6, z: 8 }];
 
 /** The wheel always has 6 crop slots, then a multiplier spot, then a reset spot. */
 export const CROP_SLOTS = 6;
