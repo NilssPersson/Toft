@@ -1,16 +1,22 @@
 import { expect, test } from '@playwright/test';
-import { PLAYER_SPAWN, WALK_CELLS_PER_SECOND, getCrop } from '../src/game/index.ts';
-import type { GridCell } from '../src/game/index.ts';
+import { PLAYER_SPAWN, WALK_CELLS_PER_SECOND, distanceBetween, getCrop } from '../src/game/index.ts';
+import type { GridCell, IslandPoint } from '../src/game/index.ts';
 import { advanceTime, clickCrop, dispatch, gameNow, getState, gotoGame, loadState, playerCell } from './game.ts';
 
 const STEP_MS = 1000 / WALK_CELLS_PER_SECOND;
 const STANDING_AT_SPAWN = { ...PLAYER_SPAWN, path: [], walkStartedAt: 0 };
 /** The middle of the island, on the far side of the starting wall from the spawn cell. */
-const MIDDLE: GridCell = { x: 6, z: 6 };
+const MIDDLE: GridCell = { x: 8, z: 8 };
 /** Around the wall to the middle one cell at a time; the real route is shorter. */
 const CELL_BY_CELL_STEPS = 6;
 /** The length of a 1.5 by 2 diagonal. */
 const DIAGONAL_STEPS = 2.5;
+
+/** How long walking `path` from `from` takes, rounded up to whole steps. */
+function walkMs(from: IslandPoint, path: IslandPoint[]): number {
+  const cells = path.reduce((total, point, i) => total + distanceBetween(path[i - 1] ?? from, point), 0);
+  return Math.ceil(cells) * STEP_MS;
+}
 
 test('the player walks around the wall to a clicked point, cutting the corners', async ({ page }) => {
   await gotoGame(page);
@@ -54,7 +60,7 @@ test('clicking a ready crop walks the player to it and harvests it', async ({ pa
   await clickCrop(page, 'p1');
   const { path } = (await getState(page)).player;
   expect(path.length).toBeGreaterThan(0);
-  await advanceTime(page, path.length * STEP_MS);
+  await advanceTime(page, walkMs(PLAYER_SPAWN, path));
 
   await expect(page.getByRole('button', { name: 'Wheel (ready to spin)' })).toBeVisible();
   const { crops, wheel } = await getState(page);

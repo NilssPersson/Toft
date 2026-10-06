@@ -11,7 +11,7 @@ import { cellCenter } from './coords.ts';
 /** Angle down from straight overhead. Locked, so the camera only turns around the player, never tilts. */
 const CAMERA_TILT = 0.9;
 const MIN_DISTANCE = 7;
-const MAX_DISTANCE = 18;
+const MAX_DISTANCE = 22;
 /** Look at the player's middle, not its feet. */
 const FOCUS_HEIGHT = 0.5;
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { applyAction, initialState, migrateFromV1 } from '../game/index.ts';
+import { applyAction, growIsland, growLayout, initialState, migrateFromV1 } from '../game/index.ts';
 import type { Action, CropId, GameState, GameStateV1 } from '../game/index.ts';
 import { now, roll } from './clock.ts';
 
@@ -33,16 +33,17 @@ interface StoreState {
 }
 
 /** Bump when GameState changes shape, and teach migrateSave the old shape. */
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
 
 interface Save {
   game: GameState;
 }
 
-/** Upgrades an older save. Version 2 added the player and the walls. */
+/** Upgrades an older save. Version 2 added the player and the walls; version 3 grew the island. */
 export function migrateSave(persisted: unknown, version: number): Save {
   const save = persisted as { game: GameState | GameStateV1 };
-  if (version < 2) return { game: migrateFromV1(save.game) };
+  if (version < 2) return { game: migrateFromV1(growLayout(save.game)) };
+  if (version < 3) return { game: growIsland(save.game as GameState) };
   return save as Save;
 }
 

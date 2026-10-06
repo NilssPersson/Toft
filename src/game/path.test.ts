@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLAYER_CLEARANCE, PLAYER_SPAWN, STARTING_WALLS, WALK_CELLS_PER_SECOND } from './config.ts';
+import { ISLAND_SIZE, PLAYER_CLEARANCE, PLAYER_SPAWN, STARTING_WALLS, WALK_CELLS_PER_SECOND } from './config.ts';
 import { cellOf, distanceBetween, findPath } from './path.ts';
 import { canPlace } from './placement.ts';
 import { applyAction, initialState } from './rules.ts';
@@ -7,7 +7,8 @@ import type { GameState, GridCell, IslandPoint, PlacedCrop } from './types.ts';
 import { isWalking, playerCell, playerPosition } from './walk.ts';
 
 const STEP_MS = 1000 / WALK_CELLS_PER_SECOND;
-const MIDDLE: GridCell = { x: 6, z: 6 };
+const MIDDLE: GridCell = { x: ISLAND_SIZE / 2, z: ISLAND_SIZE / 2 };
+const LAST = ISLAND_SIZE - 1;
 const ONE_BY_ONE = { w: 1, d: 1 };
 const SAMPLE_STEP = 0.01;
 
@@ -77,14 +78,14 @@ describe('findPath', () => {
     const boxedIn = {
       ...initialState(),
       walls: [
-        { x: 10, z: 11 },
-        { x: 11, z: 10 },
+        { x: LAST - 1, z: LAST },
+        { x: LAST, z: LAST - 1 },
       ],
     };
     expect(findPath(initialState(), PLAYER_SPAWN, PLAYER_SPAWN)).toEqual([]);
     expect(findPath(initialState(), PLAYER_SPAWN, STARTING_WALLS[0] ?? MIDDLE)).toBeUndefined();
-    expect(findPath(initialState(), PLAYER_SPAWN, { x: 11.6, z: 0 })).toBeUndefined();
-    expect(findPath(boxedIn, PLAYER_SPAWN, { x: 11, z: 11 })).toBeUndefined();
+    expect(findPath(initialState(), PLAYER_SPAWN, { x: LAST + 0.6, z: 0 })).toBeUndefined();
+    expect(findPath(boxedIn, PLAYER_SPAWN, { x: LAST, z: LAST })).toBeUndefined();
     expect(findPath(initialState(), PLAYER_SPAWN, { x: Number.NaN, z: 0 })).toBeUndefined();
   });
 

@@ -74,7 +74,7 @@ export const GRASS: GrassConfig = {
   },
   tufts: {
     perCell: 4,
-    maxCount: 600,
+    maxCount: 1000,
     height: [0.14, 0.26],
     bladeWidth: 0.08,
     rootShade: 0.55,
