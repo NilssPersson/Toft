@@ -5,7 +5,11 @@ Playwright tests for whole flows and layout, run on a desktop (1440×900) and a 
 ```sh
 npm run e2e      # builds the test build, serves it, runs every spec, shuts the server down
 npm run e2e:ui   # the same, in Playwright's UI for debugging
+npm run screenshot  # saves the default and zoomed-out view of /play to test-results/, for visual review
+npm run e2e:perf    # prints average and p95 frame time; compare with main on the same machine
 ```
+
+The two tools live in `tools/*.tool.ts` and use `playwright.tools.config.ts`; `npm run e2e` and CI don't run them. Use them instead of writing a throwaway spec.
 
 Never start a server yourself. Rules and the reasons behind them are in "Testing" in `CLAUDE.md`.
 
@@ -34,3 +38,11 @@ test('a winning spin shows the result', async ({ page }) => {
 Time: `advanceTime(page, ms)` moves the game's clock forward, so crops grow instantly. Don't use `page.clock`: it also fakes `requestAnimationFrame` and freezes the 3D scene.
 
 On failure, the trace and a screenshot are in `test-results/`; open the trace with `npx playwright show-trace <path>/trace.zip`.
+
+## Screenshots are slow
+
+The browser renders with software WebGL (SwiftShader). A frame takes 100–300 ms locally and about 1 s in CI, and a screenshot waits for one, so each costs several seconds. Take **at most one `saveScreenshot` per test**; split a test that needs two. To show the whole island, call `zoomOutFully(page)` first.
+
+## Time-driven state
+
+`advanceTime` also does what the next frame would for state that only changes with time: the crop the player walked to is tended as soon as the clock says it has arrived. Tests don't have to wait for a slow frame after moving the clock.

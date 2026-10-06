@@ -65,13 +65,16 @@ Rules:
 - **Set up state with `window.__toft`, not by playing through the canvas**, and never click canvas coordinates. The hook (`src/testing/testHook.ts`) has `getState`, `loadState`, `advanceTime`, `setNextRoll`, `now`, `isCropReady`, `dispatch`, `playerCell`, `clickCrop` (a crop click: walk next to it, then water or harvest), `startBuild` (pick a shop item) and `moveGhost` (drag the ghost to a cell). It exists only in test builds (`PUBLIC_TEST_HOOKS=true`, dynamic import); `npm run build` fails if `__toft` reaches `dist/`.
 - **Control time with `advanceTime`, not `page.clock`.** `page.clock` also fakes `requestAnimationFrame`, which freezes the R3F render loop. `advanceTime` only moves the clock the store passes to the rules as `now`.
 - When an e2e test fails, read the error and the trace in `test-results/` (`npx playwright show-trace <path>/trace.zip`) before changing anything. Don't add retries or longer timeouts to make it pass.
-- In Claude cloud sessions, Chromium is preinstalled at `/opt/pw-browsers`; if it doesn't match the pinned Playwright version, run with `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium`. Never run `playwright install` there. CI installs its own browser.
+- In Claude cloud sessions, Chromium is preinstalled at `/opt/pw-browsers`; `playwright.config.ts` uses it automatically when the pinned version is missing (`PW_CHROMIUM_PATH` overrides). It is often older than CI's, so a local pass doesn't prove a CI pass. Never run `playwright install` there. CI installs its own browser.
+- **Derive sizes and positions from config**, never hard-code them in tests: use `ISLAND_SIZE`, `PLAYER_SPAWN` and friends from `src/game/config.ts`, so changing tuning doesn't break unrelated tests.
+- **At most one screenshot per e2e test.** Under software WebGL a frame takes about 1 s in CI and a screenshot several seconds; more than one per test hits the 30 s timeout.
+- **For visual and performance checks, use the tools, not a throwaway spec:** `npm run screenshot` saves the default and fully zoomed-out view of `/play` to `test-results/`; `npm run e2e:perf` prints average and p95 frame time. Compare perf against `main` on the same machine, never against a fixed number. Helpers: `zoomOutFully` and `measureFrameTimes` in `e2e/game.ts`.
 
 ## Pull requests
 
 - **Every agent PR includes a note** in `docs/agent-notes/` about friction in the workflow, so this file, the lint rules, scripts and skills can be improved. Name it `YYYY-MM-DD-<branch without claude/ and any random suffix>.md` and copy `_template.md`; `docs/agent-notes/README.md` has the format and what each heading means.
 - Note rules: only concrete items, each with evidence (file, command, error message or rule name); "None" under an empty heading; short bullets; no advice, praise or summary of the PR; even small PRs get one.
-- Order: the note is the last commit, after all checks pass, with `pr:` empty. Open the PR, with its description linking to the note. Then fill in `pr:` in a small follow-up commit.
+- Order: the note is the last commit before opening the PR, after all checks pass, with `pr:` empty. Open the PR, with its description linking to the note. The only commit after that fills in `pr:`.
 - Never edit another PR's note. Only the separate review changes `status` (`new` → `reviewed`).
 - PR descriptions follow `.github/pull_request_template.md` (Summary, How to test, Checks run, Agent notes). PRs opened through the API don't get the template automatically, so copy its headings.
 
@@ -79,6 +82,8 @@ Rules:
 
 `npm run lint` · `npm run format:check` · `npm test` · `npm run typecheck` (`astro check`) · `npm run build` (runs the type check first and the `dist/` test-hook check after) · `npm run e2e`
 
-CI's "Test and build" job runs lint, the format check, tests and the build, in that order; a separate "E2E" job runs Playwright and uploads the report and traces on failure. `npm run format` fixes formatting.
+Review tools, not checks: `npm run screenshot` · `npm run e2e:perf` (see "Testing").
+
+CI's "Test and build" job runs lint, the format check, tests and the build, in that order; a separate "E2E" job runs Playwright and uploads the report, screenshots and traces on every run (artifact `playwright-report`), so review screenshots from passing tests are kept too. `npm run format` fixes formatting.
 
 Vitest uses Astro's Vite config via `getViteConfig` in `vitest.config.ts`, with two projects: `unit` and `components`.
