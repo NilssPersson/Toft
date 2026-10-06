@@ -10,5 +10,6 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true
-  }
+  },
+  "exclude": ["dist", "dist-e2e"]
 }
