@@ -186,7 +186,7 @@ export default defineConfig(
 
   // Tests: exempt from the size rules, and may use real time and randomness.
   {
-    files: ['**/*.test.ts', '**/*.test.tsx', 'e2e/**/*.spec.ts'],
+    files: ['**/*.test.ts', '**/*.test.tsx', 'e2e/**/*.spec.ts', 'e2e/**/*.tool.ts'],
     rules: {
       'max-lines-per-function': 'off',
       complexity: 'off',

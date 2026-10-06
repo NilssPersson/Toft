@@ -4,14 +4,17 @@ import { initialState, isReady, playerCell } from '../game/index.ts';
 import type { Action, GameState, GridCell } from '../game/index.ts';
 import { setSources } from '../state/clock.ts';
 import { moveGhost, startBuild } from '../state/build.ts';
-import { walkToCrop } from '../state/interaction.ts';
+import { tendPendingCrop, walkToCrop } from '../state/interaction.ts';
 import { useStore } from '../state/store.ts';
 
 export interface TestHook {
   getState: () => GameState;
   /** Replaces the game with a fresh state plus these fields. */
   loadState: (partial: Partial<GameState>) => void;
-  /** Moves the clock the store passes as `now` forward, so crops grow without waiting. */
+  /**
+   * Moves the clock the store passes as `now` forward, so crops grow without waiting. Also tends the crop the player
+   * walked to if it has now arrived, as the next frame would, so tests don't wait on slow software-WebGL frames.
+   */
   advanceTime: (ms: number) => void;
   /** The next spin uses this roll instead of a random one. */
   setNextRoll: (value: number) => void;
@@ -60,6 +63,7 @@ const TEST_HOOK: TestHook = {
   },
   advanceTime: (ms) => {
     offsetMs += ms;
+    tendPendingCrop();
   },
   setNextRoll: (value) => {
     nextRolls.push(value);
