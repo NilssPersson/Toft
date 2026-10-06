@@ -1,7 +1,7 @@
 // Helpers every e2e test uses: open the game, wait until it is ready, and drive window.__toft.
 // Functions passed to page.evaluate run in the browser and can't share code with this file, so each is self-contained.
 import { expect } from '@playwright/test';
-import type { Locator, Page } from '@playwright/test';
+import type { Locator, Page, TestInfo } from '@playwright/test';
 import { WHEEL_SPOTS } from '../src/game/index.ts';
 import type { Action, GameState, GridCell } from '../src/game/index.ts';
 import type {} from '../src/testing/testHook.ts';
@@ -68,4 +68,11 @@ export async function playerCell(page: Page): Promise<GridCell | undefined> {
 /** Does what a click on a crop would: the player walks next to it, then waters or harvests it. */
 export async function clickCrop(page: Page, uid: string): Promise<void> {
   await page.evaluate((plotUid) => window.__toft?.clickCrop(plotUid), uid);
+}
+
+/** Saves a full-page screenshot to test-results/ and the report. For review only: never compared pixel by pixel. */
+export async function saveScreenshot(page: Page, testInfo: TestInfo, name: string): Promise<void> {
+  const path = testInfo.outputPath(`${name}.png`);
+  await page.screenshot({ path });
+  await testInfo.attach(name, { path, contentType: 'image/png' });
 }

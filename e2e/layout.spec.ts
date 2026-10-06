@@ -1,13 +1,5 @@
 import { expect, test } from '@playwright/test';
-import type { Page, TestInfo } from '@playwright/test';
-import { gotoGame, sidePanel } from './game.ts';
-
-/** Saves a full-page screenshot to test-results/ and the report. For review only: never compared pixel by pixel. */
-async function saveScreenshot(page: Page, testInfo: TestInfo, name: string): Promise<void> {
-  const path = testInfo.outputPath(`${name}.png`);
-  await page.screenshot({ path });
-  await testInfo.attach(name, { path, contentType: 'image/png' });
-}
+import { gotoGame, saveScreenshot, sidePanel } from './game.ts';
 
 test('HUD layout with the side panel closed and open', async ({ page }, testInfo) => {
   await gotoGame(page);
