@@ -13,6 +13,9 @@ status: new
 - An inline `python3` slice of `e2e/game.ts` cut out every helper between two markers; restored with `git checkout`. Edit tool would have been safer.
 - `npm run build` (`astro check`) reported `findByRole(..., { disabled: false })` as TS2769; Vitest ran it without complaint, so it only showed up at build time.
 
+- CI E2E failed on 4 tests (`Test timeout of 30000ms exceeded` at `page.screenshot` in `e2e/game.ts:106`). Screenshot tests already took 21–27 s on `main` in CI; my test took three screenshots and also slowed the island/layout screenshot tests in the other worker. Measured frame time with a scratch rAF spec: ~1.0–1.4 s per frame locally on both `main` and this branch, so no rendering regression. Fixed by one screenshot per test.
+- `data-build-state` stayed `off` for over 5 s when `startBuild` ran right after `gotoGame`: it was only updated in `useFrame`, and the first frames compile shaders. It now also updates on store changes (`src/scene/BuildStateSignal.tsx`).
+
 ## Guessed
 
 - "In front of the player" = the cell between the player and the camera, from the camera's offset rounded to a grid direction (`src/state/view.ts`). Arrow keys move relative to that view. Added as open question 12.
@@ -37,6 +40,8 @@ status: new
 - ✓'s enabled state is computed at render. If the player walks off or onto the ghost's cell with no store change, the button lags until the next store update. `data-build-state` and the ghost tint are per frame / render as well (`src/ui/BuildControls.tsx`).
 
 ## Suggested change
+
+- Document in `e2e/README.md` that a screenshot costs several seconds in CI (software WebGL, ~1 s frames), so a test should take at most one.
 
 - Exclude `dist-e2e/` from `astro check` (tsconfig `exclude`) so build errors aren't buried.
 - Find the root cause of the `player.spec.ts` harvest flake (the harvest waits on a render frame after `advanceTime`), or give `e2e/game.ts` a helper that waits for the pending crop to be tended.
