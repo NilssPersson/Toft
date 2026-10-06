@@ -1,9 +1,8 @@
 name: CI
 
+# Pull requests only: main is protected and changes land only through a PR that already passed these checks.
 on:
   pull_request:
-  push:
-    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
