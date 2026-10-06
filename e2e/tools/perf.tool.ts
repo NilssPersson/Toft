@@ -5,7 +5,7 @@ import { gotoGame, measureFrameTimes } from '../game.ts';
 
 /** The first frames compile shaders and would skew the numbers. */
 const WARM_UP_FRAMES = 5;
-/** Few frames: each takes 100–300 ms locally and about 1 s in CI. */
+/** Few frames: each takes about half a second locally and longer in CI. */
 const MEASURED_FRAMES = 20;
 const P95 = 0.95;
 

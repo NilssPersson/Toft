@@ -27,10 +27,9 @@ status: new
 
 ## Noticed, out of scope
 
-- `e2e/island.spec.ts` and `e2e/layout.spec.ts` each take two screenshots in one test, against the new one-per-test rule in `CLAUDE.md`.
+- A parallel PR on `main` (`docs/agent-notes/2026-10-06-island-building-shop-e2e-speed.md`) added the same one-screenshot-per-test rule to `CLAUDE.md` and `e2e/README.md`; after merging `main`, this PR's copies were removed.
 - No `npm run note` script yet (suggested in PR #9's note); the note file name is still built by hand.
 
 ## Suggested change
 
-- Split `e2e/island.spec.ts` and `e2e/layout.spec.ts` into one screenshot per test.
 - Add `scripts/newAgentNote.ts` behind `npm run note`, filling `date` and `branch` from `git`.

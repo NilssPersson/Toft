@@ -35,15 +35,11 @@ test('a winning spin shows the result', async ({ page }) => {
 });
 ```
 
-Speed: every page renders the 3D scene in software, so a frame takes about half a second locally and longer in CI, and anything that waits on a frame (`toBeInViewport`, a click's stability check, a screenshot) pays for it. Tests run one at a time (`workers: 1`) because two pages starve each other. Take at most one `saveScreenshot` per test, and don't take a screenshot another test already takes.
+Speed: every page renders the 3D scene in software, so a frame takes about half a second locally and longer in CI, and anything that waits on a frame (`toBeInViewport`, a click's stability check, a screenshot) pays for it. Tests run one at a time (`workers: 1`) because two pages starve each other. Take at most one `saveScreenshot` per test, and don't take a screenshot another test already takes. To show the whole island in one, call `zoomOutFully(page)` first.
 
 Time: `advanceTime(page, ms)` moves the game's clock forward, so crops grow instantly. Don't use `page.clock`: it also fakes `requestAnimationFrame` and freezes the 3D scene.
 
 On failure, the trace and a screenshot are in `test-results/`; open the trace with `npx playwright show-trace <path>/trace.zip`.
-
-## Screenshots are slow
-
-The browser renders with software WebGL (SwiftShader). A frame takes 100–300 ms locally and about 1 s in CI, and a screenshot waits for one, so each costs several seconds. Take **at most one `saveScreenshot` per test**; split a test that needs two. To show the whole island, call `zoomOutFully(page)` first.
 
 ## Time-driven state
 

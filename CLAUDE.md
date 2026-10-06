@@ -68,7 +68,6 @@ Rules:
 - When an e2e test fails, read the error and the trace in `test-results/` (`npx playwright show-trace <path>/trace.zip`) before changing anything. Don't add retries or longer timeouts to make it pass.
 - In Claude cloud sessions, Chromium is preinstalled at `/opt/pw-browsers`; `playwright.config.ts` uses it automatically when the pinned version is missing (`PW_CHROMIUM_PATH` overrides). It is often older than CI's, so a local pass doesn't prove a CI pass. Never run `playwright install` there. CI installs its own browser.
 - **Derive sizes and positions from config**, never hard-code them in tests: use `ISLAND_SIZE`, `PLAYER_SPAWN` and friends from `src/game/config.ts`, so changing tuning doesn't break unrelated tests.
-- **At most one screenshot per e2e test.** Under software WebGL a frame takes about 1 s in CI and a screenshot several seconds; more than one per test hits the 30 s timeout.
 - **For visual and performance checks, use the tools, not a throwaway spec:** `npm run screenshot` saves the default and fully zoomed-out view of `/play` to `test-results/`; `npm run e2e:perf` prints average and p95 frame time. Compare perf against `main` on the same machine, never against a fixed number. Helpers: `zoomOutFully` and `measureFrameTimes` in `e2e/game.ts`.
 
 ## Pull requests
