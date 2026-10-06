@@ -1,11 +1,16 @@
-import type { ReactElement } from 'react';
-import { spinsRequired } from '../game/index.ts';
+import type { ReactElement, ReactNode } from 'react';
 import { useStore } from '../state/store.ts';
-import { Wheel } from './Wheel.tsx';
+import type { PanelId } from '../state/store.ts';
 
-export const SIDE_PANEL_ID = 'side-panel';
+export function panelId(panel: PanelId): string {
+  return `${panel}-panel`;
+}
 
-function CloseButton(): ReactElement {
+export function panelTitleId(panel: PanelId): string {
+  return `${panel}-panel-title`;
+}
+
+export function PanelCloseButton(): ReactElement {
   const closePanel = useStore((state) => state.closePanel);
   const isWheelSpinning = useStore((state) => state.isWheelSpinning);
   return (
@@ -15,46 +20,29 @@ function CloseButton(): ReactElement {
   );
 }
 
-function LevelProgress(): ReactElement {
-  const { level, spinsRemaining } = useStore((state) => state.game.progression);
-  const required = spinsRequired(level);
-  const wins = required - spinsRemaining;
-  return (
-    <div className="level-progress">
-      <div className="progress">
-        <div className="progress-fill" style={{ width: `${(wins / required) * 100}%` }} />
-      </div>
-      <span className="progress-label">
-        {wins} / {required} spins
-      </span>
-    </div>
-  );
+interface SidePanelProps {
+  panel: PanelId;
+  /** Extra class for the panel's own layout. */
+  className: string;
+  children: ReactNode;
 }
 
 /**
- * Slides in from the left over the canvas; the island stays playable on the right.
- * Always mounted, so the wheel keeps its last result and the slide can animate. The level chip
- * and the ★ sit on top of it, in the spaces its header and last row leave free.
+ * Slides in from the left over the canvas; the island stays playable on the right. Only one is open at a time.
+ * Always mounted, so a panel keeps its state and the slide can animate. Its heading is the element with
+ * `panelTitleId(panel)`. The level chip and the ★ sit on top, in the spaces its header and last row leave free.
  */
-export function SidePanel(): ReactElement {
-  const level = useStore((state) => state.game.progression.level);
-  const isOpen = useStore((state) => state.isPanelOpen);
+export function SidePanel({ panel, className, children }: SidePanelProps): ReactElement {
+  const isOpen = useStore((state) => state.openPanel === panel);
   return (
     <aside
-      id={SIDE_PANEL_ID}
-      className={`side-panel ${isOpen ? 'is-open' : ''}`}
-      aria-labelledby="side-panel-title"
+      id={panelId(panel)}
+      className={`side-panel ${className} ${isOpen ? 'is-open' : ''}`}
+      aria-labelledby={panelTitleId(panel)}
       inert={!isOpen}
       data-state={isOpen ? 'open' : 'closed'}
     >
-      <header className="side-panel-header">
-        <h2 id="side-panel-title" className="visually-hidden">
-          Level {level}
-        </h2>
-        <CloseButton />
-      </header>
-      <LevelProgress />
-      <Wheel />
+      {children}
     </aside>
   );
 }

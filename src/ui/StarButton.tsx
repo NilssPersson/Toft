@@ -1,20 +1,20 @@
 import type { ReactElement } from 'react';
 import { canSpin } from '../game/index.ts';
 import { useStore } from '../state/store.ts';
-import { SIDE_PANEL_ID } from './SidePanel.tsx';
+import { panelId } from './SidePanel.tsx';
 
-/** The ★ in the bottom-left corner opens and closes the side panel. Its badge says the wheel can spin. */
+/** The ★ in the bottom-left corner opens and closes the wheel's panel. Its badge says the wheel can spin. */
 export function StarButton(): ReactElement {
-  const isPanelOpen = useStore((state) => state.isPanelOpen);
+  const isWheelOpen = useStore((state) => state.openPanel === 'wheel');
   const togglePanel = useStore((state) => state.togglePanel);
   const isSpinReady = useStore((state) => canSpin(state.game.wheel));
   const label = isSpinReady ? 'Wheel (ready to spin)' : 'Wheel';
   return (
     <button
-      className={`tile star-button ${isPanelOpen ? 'is-open' : ''}`}
-      onClick={togglePanel}
-      aria-expanded={isPanelOpen}
-      aria-controls={SIDE_PANEL_ID}
+      className={`tile star-button ${isWheelOpen ? 'is-open' : ''}`}
+      onClick={() => togglePanel('wheel')}
+      aria-expanded={isWheelOpen}
+      aria-controls={panelId('wheel')}
       aria-label={label}
       title={label}
     >

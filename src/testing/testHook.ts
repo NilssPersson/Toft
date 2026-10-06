@@ -3,6 +3,7 @@
 import { initialState, isReady, playerCell } from '../game/index.ts';
 import type { Action, GameState, GridCell } from '../game/index.ts';
 import { setSources } from '../state/clock.ts';
+import { moveGhost, startBuild } from '../state/build.ts';
 import { walkToCrop } from '../state/interaction.ts';
 import { useStore } from '../state/store.ts';
 
@@ -24,6 +25,10 @@ export interface TestHook {
   playerCell: () => GridCell;
   /** Stands in for a click on a crop: the player walks next to it, then waters or harvests it. */
   clickCrop: (uid: string) => void;
+  /** Starts build mode with a shop item, as picking it in the shop does. A locked item does nothing. */
+  startBuild: (itemId: string) => void;
+  /** Stands in for dragging the ghost, or tapping a cell, in build mode. */
+  moveGhost: (cell: GridCell) => void;
 }
 
 declare global {
@@ -51,7 +56,7 @@ function isCropReady(uid: string): boolean {
 const TEST_HOOK: TestHook = {
   getState: () => useStore.getState().game,
   loadState: (partial) => {
-    useStore.setState({ game: { ...initialState(), ...partial }, pendingCropUid: null });
+    useStore.setState({ game: { ...initialState(), ...partial }, pendingCropUid: null, buildDraft: null });
   },
   advanceTime: (ms) => {
     offsetMs += ms;
@@ -66,6 +71,8 @@ const TEST_HOOK: TestHook = {
   },
   playerCell: () => playerCell(useStore.getState().game, testNow()),
   clickCrop: walkToCrop,
+  startBuild,
+  moveGhost,
 };
 
 export function installTestHook(): void {

@@ -1,37 +1,21 @@
-import { useEffect } from 'react';
 import type { ReactElement } from 'react';
 import { useStore } from '../state/store.ts';
-import { BuyMenu } from './BuyMenu.tsx';
 import { FullscreenButton, useFullscreenOnFirstInteraction } from './Fullscreen.tsx';
 import { HintToast } from './HintToast.tsx';
 import { LevelChip } from './LevelChip.tsx';
 import { SettingsMenu } from './SettingsMenu.tsx';
-import { SidePanel } from './SidePanel.tsx';
+import { ShopButton } from './ShopButton.tsx';
+import { ShopPanel } from './ShopPanel.tsx';
 import { StarButton } from './StarButton.tsx';
 import { UpdatePrompt } from './UpdatePrompt.tsx';
-
-/** Esc stops placing the selected crop and closes the side panel (unless the wheel is turning). */
-function useEscape(): void {
-  const selectCrop = useStore((state) => state.selectCrop);
-  const closePanel = useStore((state) => state.closePanel);
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape') return;
-      selectCrop(null);
-      closePanel();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [selectCrop, closePanel]);
-}
+import { WheelPanel } from './WheelPanel.tsx';
+import { useHudKeys } from './useHudKeys.ts';
 
 function SystemButtons(): ReactElement {
   return (
     <div className="hud-top-right">
       <div className="tile-row">
-        <BuyMenu />
+        <ShopButton />
         <FullscreenButton />
         <SettingsMenu />
       </div>
@@ -42,12 +26,13 @@ function SystemButtons(): ReactElement {
 
 /** Lays the HUD out along the screen edges, leaving the middle to the island. */
 export function Hud(): ReactElement {
-  useEscape();
+  useHudKeys();
   useFullscreenOnFirstInteraction();
-  const isPanelOpen = useStore((state) => state.isPanelOpen);
+  const isPanelOpen = useStore((state) => state.openPanel !== null);
   return (
     <div className={`hud ${isPanelOpen ? 'is-panel-open' : ''}`}>
-      <SidePanel />
+      <WheelPanel />
+      <ShopPanel />
       <LevelChip />
       <SystemButtons />
       <StarButton />

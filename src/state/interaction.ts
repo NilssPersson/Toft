@@ -1,9 +1,14 @@
-// What a click on the island does, apart from planting: walk somewhere, or walk to a crop and tend it.
+// What a click on the island does: walk somewhere, or walk to a crop and tend it; in build mode, move the ghost.
 // The scene calls these on clicks and every frame; the test hook calls them in place of clicks.
-import { approachCell, isNextToPlot, isReady, playerCell } from '../game/index.ts';
+import { approachCell, cellOf, isNextToPlot, isReady, playerCell } from '../game/index.ts';
 import type { Action, IslandPoint, PlacedCrop } from '../game/index.ts';
+import { moveGhost } from './build.ts';
 import { now } from './clock.ts';
 import { useStore } from './store.ts';
+
+function isBuilding(): boolean {
+  return useStore.getState().buildDraft !== null;
+}
 
 /** What tending a plot does: water it while it waits, harvest it once ready. */
 function plotAction(plot: PlacedCrop, at: number): Action | null {
@@ -39,4 +44,21 @@ export function tendPendingCrop(): void {
   setPendingCrop(null);
   const action = plot && plotAction(plot, at);
   if (action) dispatch(action);
+}
+
+/** A tap on open ground: in build mode the ghost moves to that cell and the player stays put; otherwise it walks there. */
+export function tapGround(point: IslandPoint): void {
+  if (isBuilding()) moveGhost(cellOf(point));
+  else walkToPoint(point);
+}
+
+/** A tap on a crop: in build mode the ghost moves to that cell; otherwise the player walks over to tend it. */
+export function tapCrop(uid: string, point: IslandPoint): void {
+  if (isBuilding()) moveGhost(cellOf(point));
+  else walkToCrop(uid);
+}
+
+/** A tap on a decoration only does anything in build mode, where the ghost moves to that cell. */
+export function tapDecoration(point: IslandPoint): void {
+  if (isBuilding()) moveGhost(cellOf(point));
 }

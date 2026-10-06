@@ -21,7 +21,7 @@ const CLEARANCE_OFFSETS: readonly IslandPoint[] = [
   { x: PLAYER_CLEARANCE, z: PLAYER_CLEARANCE },
 ];
 
-export type Island = Pick<GameState, 'islandSize' | 'crops' | 'walls'>;
+export type Island = Pick<GameState, 'islandSize' | 'crops' | 'decorations'>;
 
 type CellCheck = (cell: GridCell) => boolean;
 
@@ -133,7 +133,7 @@ function straightenRoute(isOpen: CellCheck, from: IslandPoint, waypoints: Island
 }
 
 /**
- * The route from one point to another, without `from`: straight lines at any angle, around walls and crops.
+ * The route from one point to another, without `from`: straight lines at any angle, around crops and blocking decorations.
  * Empty when already there; undefined if the point is off the island, blocked or unreachable.
  */
 export function findPath(island: Island, from: IslandPoint, to: IslandPoint): IslandPoint[] | undefined {

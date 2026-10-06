@@ -87,10 +87,11 @@ Set the real public URL in `src/site/config.ts` (`url`). It is used for canonica
 
 ## How to play (current prototype)
 
-1. Pick a crop in the bottom bar and click the island to plant it.
-2. Blue marker = needs water: click it. The crop grows.
-3. Yellow marker = ready: click to harvest. The crop stays, and its wheel slot fills.
-4. Spin the wheel. A filled slot is a win, an empty slot or Reset loses this level's progress, and the multiplier pays out only when all six slots are filled.
+1. Click anywhere on the island to walk there.
+2. Open the shop (top right) and pick a crop or a decoration. A grey ghost appears on the island: drag it, tap a cell or use the arrow keys / WASD to move it, R to turn a fence, then ✓ (or Enter) to plant or build it. You can keep placing the same item; ✕ (or Esc) stops.
+3. Blue marker = needs water: click it. The player walks over and waters it, and the crop grows.
+4. Yellow marker = ready: click to harvest. The crop stays, and its wheel slot fills.
+5. Spin the wheel from the ★. A filled slot is a win, an empty slot or Reset loses this level's progress, and the multiplier pays out only when all six slots are filled.
 
 Progress is saved in the browser automatically.
 
@@ -107,8 +108,8 @@ src/
   game/     Pure game rules: types, config/tuning, grid, wheel, rules + tests.
             No React, no Three.js, no clock or randomness.
   state/    zustand store: the only bridge between rules and app (dispatch(action)).
-  scene/    3D world (R3F): island, crop plots, camera, lights.
-  ui/       HTML overlay along the screen edges: level chip, crop hotbar, ★ side panel with the wheel.
+  scene/    3D world (R3F): island, crop plots, decorations, the build ghost, camera, lights.
+  ui/       HTML overlay along the screen edges: level chip, shop and ★ side panels, build controls.
   styles.css  Game styles, loaded only by /play.
 public/     Static files copied as-is: favicon, app icons, web app manifest, Cloudflare _headers.
 integrations/  Build step that generates the service worker (dist/sw.js) with Workbox.

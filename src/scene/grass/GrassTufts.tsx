@@ -3,7 +3,7 @@ import type { ReactElement, RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Color, Object3D } from 'three';
 import type { BufferGeometry, InstancedMesh, Material } from 'three';
-import { blockedCells } from '../../game/index.ts';
+import { takenCells } from '../../game/index.ts';
 import { isPhone } from '../../pwa/orientation.ts';
 import { useStore } from '../../state/store.ts';
 import { prefersReducedMotion } from '../../ui/motion.ts';
@@ -25,15 +25,15 @@ function tuftCapacity(): number {
   return Math.floor(GRASS.tufts.maxCount * (isPhone() ? PHONE_TUFT_SHARE : 1));
 }
 
-/** The tufts for the current island, recomputed only when crops or walls change. */
+/** The tufts for the current island, recomputed only when crops or decorations change. */
 function useLawn(capacity: number): Lawn {
   const islandSize = useStore((state) => state.game.islandSize);
   const crops = useStore((state) => state.game.crops);
-  const walls = useStore((state) => state.game.walls);
+  const decorations = useStore((state) => state.game.decorations);
   return useMemo(() => {
     const perCell = tuftsPerCell(islandSize, capacity);
-    return { tufts: scatterTufts({ islandSize, blocked: blockedCells({ crops, walls }), perCell }), islandSize };
-  }, [islandSize, crops, walls, capacity]);
+    return { tufts: scatterTufts({ islandSize, blocked: takenCells({ crops, decorations }), perCell }), islandSize };
+  }, [islandSize, crops, decorations, capacity]);
 }
 
 interface Lawn {
@@ -100,7 +100,7 @@ function useTuftParts(): TuftParts {
   return parts;
 }
 
-/** Low-poly grass tufts over the lawn, all in one draw call, skipping cells with crops or walls. */
+/** Low-poly grass tufts over the lawn, all in one draw call, skipping cells with crops or decorations. */
 export function GrassTufts(): ReactElement {
   const capacity = useMemo(() => tuftCapacity(), []);
   const mesh = useInstances(useLawn(capacity));

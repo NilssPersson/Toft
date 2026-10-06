@@ -1,4 +1,4 @@
-import type { CropDef, GridCell } from './types.ts';
+import type { CropDef, DecorationDef, GridCell } from './types.ts';
 
 /** Tuning lives here so balancing never touches rule code. */
 
@@ -9,11 +9,14 @@ export const PLAYER_SPAWN: GridCell = { x: 4, z: 8 };
 
 export const WALK_CELLS_PER_SECOND = 4;
 
-/** How far, in cells, the player keeps from walls, crops and the island's edge when cutting across. */
+/** How far, in cells, the player keeps from walls, fences, crops and the island's edge when cutting across. */
 export const PLAYER_CLEARANCE = 0.3;
 
-/** Between the spawn cell and the middle of the island, so the first walk there goes around it. */
+/** Stone walls between the spawn cell and the middle of the island, so the first walk there goes around one. */
 export const STARTING_WALLS: GridCell[] = [{ x: 6, z: 8 }];
+
+/** The decoration every starting wall, and every wall in a save from before decorations, becomes. */
+export const STONE_WALL_ID = 'stone-wall';
 
 /** The wheel always has 6 crop slots, then a multiplier spot, then a reset spot. */
 export const CROP_SLOTS = 6;
@@ -88,6 +91,56 @@ export const CROPS: CropDef[] = [
     color: '#3f8f4a',
   },
 ];
+
+/** Placeholder decorations; names, colours and unlock levels are all to be balanced. Building is free for now. */
+export const DECORATIONS: DecorationDef[] = [
+  {
+    id: STONE_WALL_ID,
+    name: 'Stone wall',
+    footprint: { w: 1, d: 1 },
+    unlockLevel: 1,
+    isRotatable: false,
+    blocksWalking: true,
+    color: '#9a958a',
+  },
+  {
+    id: 'wooden-fence',
+    name: 'Wooden fence',
+    footprint: { w: 1, d: 1 },
+    unlockLevel: 1,
+    isRotatable: true,
+    blocksWalking: true,
+    color: '#a87445',
+  },
+  {
+    id: 'flower-bed',
+    name: 'Flower bed',
+    footprint: { w: 1, d: 1 },
+    unlockLevel: 2,
+    isRotatable: false,
+    blocksWalking: false,
+    color: '#e27fa6',
+  },
+  {
+    id: 'hedge',
+    name: 'Hedge',
+    footprint: { w: 1, d: 1 },
+    unlockLevel: 3,
+    isRotatable: false,
+    blocksWalking: true,
+    color: '#4c8a3c',
+  },
+];
+
+export const DECORATIONS_BY_ID: Record<string, DecorationDef> = Object.fromEntries(
+  DECORATIONS.map((decoration) => [decoration.id, decoration]),
+);
+
+export function getDecoration(id: string): DecorationDef {
+  const decoration = DECORATIONS_BY_ID[id];
+  if (!decoration) throw new Error(`Unknown decoration: ${id}`);
+  return decoration;
+}
 
 export const CROPS_BY_ID: Record<string, CropDef> = Object.fromEntries(CROPS.map((crop) => [crop.id, crop]));
 

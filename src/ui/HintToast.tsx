@@ -5,8 +5,8 @@ import { useStore } from '../state/store.ts';
 /** Remembers the welcome hint apart from the save: it is UI, not game state. */
 const WELCOME_SEEN_KEY = 'toft-welcome-seen';
 const WELCOME_MS = 8000;
-const PLACING_TEXT = 'Tap the island to plant · Esc to stop';
-const WELCOME_TEXT = 'Tap to walk · buy crops from the basket · tap blue to water, yellow to harvest';
+const BUILDING_TEXT = 'Drag to move · ✓ to build';
+const WELCOME_TEXT = 'Tap to walk · plant and build from the shop · tap blue to water, yellow to harvest';
 
 function hasSeenWelcome(): boolean {
   try {
@@ -36,14 +36,14 @@ function useWelcome(): boolean {
   return isShowing;
 }
 
-/** A small note at the bottom: how to plant while a crop is picked, and a welcome on the first visit. */
+/** A small note at the bottom: how to build in build mode, and a welcome on the first visit. */
 export function HintToast(): ReactElement | null {
-  const isPlacing = useStore((state) => state.selectedCrop !== null);
+  const isBuilding = useStore((state) => state.buildDraft !== null);
   const isWelcome = useWelcome();
-  if (!isPlacing && !isWelcome) return null;
+  if (!isBuilding && !isWelcome) return null;
   return (
     <div className="panel hint-toast" role="status">
-      {isPlacing ? PLACING_TEXT : WELCOME_TEXT}
+      {isBuilding ? BUILDING_TEXT : WELCOME_TEXT}
     </div>
   );
 }

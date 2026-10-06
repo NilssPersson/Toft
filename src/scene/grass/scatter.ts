@@ -16,7 +16,7 @@ export interface Tuft {
 
 export interface Lawn {
   islandSize: number;
-  /** `cellKey`s of cells taken by crops and walls. */
+  /** `cellKey`s of cells taken by crops and decorations. */
   blocked: ReadonlySet<string>;
   perCell: number;
 }

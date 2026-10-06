@@ -1,9 +1,20 @@
-import { CROPS, CROP_SLOTS, ISLAND_SIZE, PLAYER_SPAWN, STARTING_WALLS, getCrop, spinsRequired } from './config.ts';
+import {
+  CROPS,
+  CROP_SLOTS,
+  DECORATIONS_BY_ID,
+  ISLAND_SIZE,
+  PLAYER_SPAWN,
+  STARTING_WALLS,
+  getCrop,
+  spinsRequired,
+} from './config.ts';
+import { stoneWallsAt } from './decorations.ts';
+import { rotatedFootprint } from './grid.ts';
 import { isNextToPlot } from './path.ts';
 import { isWalking, playerCell, walkTo } from './walk.ts';
 import { canPlace } from './placement.ts';
 import { canSpin, emptyWheel, resolveSpin } from './wheel.ts';
-import type { Action, CropDef, CropId, GameState, PlacedCrop } from './types.ts';
+import type { Action, CropDef, CropId, GameState, PlacedCrop, PlacedDecoration, Rotation } from './types.ts';
 
 type ActionOf<T extends Action['type']> = Extract<Action, { type: T }>;
 type ActionHandler<T extends Action['type']> = (state: GameState, action: ActionOf<T>, now: number) => GameState;
@@ -13,7 +24,7 @@ export function initialState(): GameState {
     islandSize: ISLAND_SIZE,
     crops: [],
     player: { ...PLAYER_SPAWN, path: [], walkStartedAt: 0 },
-    walls: STARTING_WALLS.map((wall) => ({ ...wall })),
+    decorations: stoneWallsAt(STARTING_WALLS),
     wheel: emptyWheel(),
     progression: { level: 1, spinsRemaining: spinsRequired(1) },
     lastSpin: null,
@@ -85,6 +96,30 @@ const applyPlace: ActionHandler<'place'> = (state, action, now) => {
   return { ...state, crops: [...state.crops, plot], nextUid: state.nextUid + 1 };
 };
 
+const ROTATIONS: readonly Rotation[] = [0, 90, 180, 270];
+
+/** A decoration that can't turn only goes down at rotation 0; a value that isn't a quarter turn is refused. */
+function isAllowedRotation(rotation: Rotation, isRotatable: boolean): boolean {
+  return isRotatable ? ROTATIONS.includes(rotation) : rotation === 0;
+}
+
+/** Building is free for now (DESIGN.md "Open questions"). */
+const applyBuild: ActionHandler<'build'> = (state, action, now) => {
+  const decoration = DECORATIONS_BY_ID[action.decorationId];
+  if (!decoration || decoration.unlockLevel > state.progression.level) return state;
+  if (!isAllowedRotation(action.rotation, decoration.isRotatable)) return state;
+  const footprint = rotatedFootprint(decoration.footprint, action.rotation);
+  if (!canPlace(state, { x: action.x, z: action.z, footprint }, now)) return state;
+  const placed: PlacedDecoration = {
+    uid: `d${state.nextUid}`,
+    decorationId: decoration.id,
+    x: action.x,
+    z: action.z,
+    rotation: action.rotation,
+  };
+  return { ...state, decorations: [...state.decorations, placed], nextUid: state.nextUid + 1 };
+};
+
 const applyFulfil: ActionHandler<'fulfil'> = (state, action, now) => {
   // TODO: 'crop' requirements are fulfilled the same way as water for now,
   // until the design decides what "needs another crop" means in play.
@@ -118,6 +153,7 @@ const applySpin: ActionHandler<'spin'> = (state, action) => {
 /** One handler per action type; the mapped type makes a missing handler a type error. */
 const HANDLERS: { [K in Action['type']]: ActionHandler<K> } = {
   place: applyPlace,
+  build: applyBuild,
   fulfil: applyFulfil,
   harvest: applyHarvest,
   move: applyMove,

@@ -6,9 +6,10 @@ test('the island lawn, without and with the placement grid', async ({ page }, te
   await expect(page.getByRole('status')).toBeHidden();
   await saveScreenshot(page, testInfo, 'island-lawn');
 
-  await page.getByRole('button', { name: 'Buy crops' }).click();
-  await page.getByRole('menuitem', { name: /^Carrot/ }).click();
-  // The placing hint and the grid both follow the selected crop.
-  await expect(page.getByRole('status')).toBeVisible();
+  await page.getByRole('button', { name: 'Shop' }).click();
+  await page.getByRole('button', { name: /^Carrot/ }).click();
+  // The build hint and the grid both follow build mode.
+  await expect(page.getByTestId('game')).toHaveAttribute('data-build-state', 'valid');
+  await expect(page.getByText('Drag to move · ✓ to build')).toBeVisible();
   await saveScreenshot(page, testInfo, 'island-placing');
 });
