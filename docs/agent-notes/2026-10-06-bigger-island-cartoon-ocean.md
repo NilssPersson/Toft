@@ -1,7 +1,7 @@
 ---
 date: 2026-10-06
 branch: claude/bigger-island-cartoon-ocean
-pr:
+pr: 14
 status: new
 ---
 
