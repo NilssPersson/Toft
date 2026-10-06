@@ -28,6 +28,10 @@ const executablePath = chromiumPath();
 export default defineConfig({
   testDir: 'e2e',
   fullyParallel: true,
+  // One at a time: every page renders the 3D scene in software (SwiftShader) on every frame, which takes all the
+  // CPU it gets. Two workers made each test about 1.7× slower, for little gain overall, and pushed screenshot tests
+  // past the 30 s timeout in CI and the crop-harvest test past its 5 s wait.
+  workers: 1,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
   reporter: isCI ? [['list'], ['html', { open: 'never' }]] : [['list']],
