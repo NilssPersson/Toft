@@ -1,9 +1,13 @@
 import { ISLAND_SIZE, PLAYER_SPAWN, STARTING_WALLS } from './config.ts';
+import { stoneWallsAt } from './decorations.ts';
 import { cellKey, isOnIsland, occupiedCells } from './grid.ts';
 import type { GameState, GridCell, IslandPoint, PlayerState } from './types.ts';
 
+/** A save from before decorations, when the only thing built was a 1×1 wall (persist versions 2 and 3). */
+export type GameStateV3 = Omit<GameState, 'decorations'> & { walls: GridCell[] };
+
 /** A save from before the player and walls existed (persist version 1). */
-export type GameStateV1 = Omit<GameState, 'player' | 'walls'>;
+export type GameStateV1 = Omit<GameStateV3, 'player' | 'walls'>;
 
 /** Rings of cells around `center`, nearest first, in a fixed order. */
 function cellsByDistance(center: GridCell, islandSize: number): GridCell[] {
@@ -26,7 +30,7 @@ function spawnCell(taken: Set<string>, islandSize: number): GridCell {
  * A crop is never removed: a wall it covers is left out, and the player stands on the nearest free cell
  * to the spawn cell instead (see DESIGN.md "Open questions").
  */
-export function migrateFromV1(game: GameStateV1): GameState {
+export function migrateFromV1(game: GameStateV1): GameStateV3 {
   const crops = occupiedCells(game.crops);
   const walls = STARTING_WALLS.filter((wall) => !crops.has(cellKey(wall)) && isOnIsland(wall, game.islandSize));
   const taken = new Set([...crops, ...walls.map(cellKey)]);
@@ -51,9 +55,15 @@ export function growLayout<T extends GameStateV1>(game: T): T {
 }
 
 /** Grows a save's island like `growLayout`, moving the walls and the player (and any walk) along with the crops. */
-export function growIsland(game: GameState): GameState {
+export function growIsland(game: GameStateV3): GameStateV3 {
   const offset = growthOffset(game.islandSize);
   const walls = game.walls.map((wall) => shift(wall, offset));
   const player = { ...shift(game.player, offset), path: game.player.path.map((point) => shift(point, offset)) };
   return { ...growLayout(game), walls, player };
+}
+
+/** Turns each wall of an older save into a stone wall decoration on the same cell. */
+export function wallsToDecorations(game: GameStateV3): GameState {
+  const { walls, ...rest } = game;
+  return { ...rest, decorations: stoneWallsAt(walls) };
 }

@@ -211,28 +211,6 @@ body {
   background: var(--paper-edge);
 }
 
-.crop-item small {
-  margin-left: auto;
-  padding-left: var(--space-3);
-  font-weight: 400;
-  opacity: 0.65;
-}
-
-.crop-item.is-selected {
-  background: var(--accent-tint);
-}
-
-.crop-item[aria-disabled='true'] {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-}
-
 .update-prompt {
   position: static;
   display: flex;
@@ -275,7 +253,7 @@ body {
   }
 }
 
-/* Side panel: slides in from the left edge, full height, over the canvas. */
+/* Side panels (the ★ wheel and the shop): slide in from the left edge, full height, over the canvas. */
 .side-panel {
   pointer-events: auto;
   position: fixed;
@@ -423,6 +401,168 @@ body {
   font-weight: 600;
 }
 
+/* Shop panel: a heading row beside the level chip, two tabs, then the items, scrolling if they don't fit.
+   The last row is left free for the ★. */
+.shop-panel .side-panel-header {
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.shop-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.shop-tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--tile-radius);
+  background: var(--paper-edge);
+}
+
+.shop-tab {
+  flex: 1;
+  min-height: 36px;
+  border: none;
+  border-radius: calc(var(--tile-radius) - var(--space-1));
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-tab[aria-selected='true'] {
+  background: var(--paper);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+.side-panel > .shop-items {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  align-content: start;
+  gap: var(--space-2);
+  overflow-y: auto;
+  padding-bottom: calc(var(--tile-size) + var(--space-2));
+}
+
+.shop-tile {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  border: 2px solid var(--paper-edge);
+  border-radius: var(--tile-radius);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.shop-tile:hover {
+  border-color: var(--accent);
+}
+
+.shop-tile[aria-disabled='true'] {
+  background: var(--locked);
+  cursor: default;
+}
+
+.shop-tile[aria-disabled='true']:hover {
+  border-color: var(--paper-edge);
+}
+
+.shop-tile[aria-disabled='true'] .shop-swatch {
+  opacity: 0.35;
+}
+
+.shop-swatch {
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgb(0 0 0 / 0.12);
+}
+
+.shop-swatch.is-round {
+  border-radius: 50%;
+}
+
+.shop-swatch.is-square {
+  border-radius: 8px;
+}
+
+.shop-tile-name {
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.shop-tile-details {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Over the swatch, so a locked item says at a glance which level opens it. */
+.shop-lock {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.shop-lock .line-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Build mode: ✕, rotate and ✓ float over the ghost (placed by the scene, kept inside the safe area). */
+.build-controls {
+  display: flex;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.round-button {
+  display: grid;
+  place-items: center;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  padding: 0;
+  border: 2px solid var(--paper-edge);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.round-button.is-confirm {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.round-button.is-cancel {
+  color: var(--badge);
+}
+
+.round-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .side-panel,
   .side-panel.is-open,
@@ -457,6 +597,19 @@ body {
   .spin-result,
   .hint-toast {
     font-size: 12px;
+  }
+  .shop-title {
+    font-size: 17px;
+  }
+  .side-panel > .shop-items {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+  .shop-tile {
+    padding: var(--space-2) var(--space-1);
+  }
+  .shop-swatch {
+    width: 28px;
+    height: 28px;
   }
 }
 

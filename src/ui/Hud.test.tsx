@@ -11,11 +11,11 @@ const rollFor = (i: number): number => (i + 0.5) / WHEEL_SPOTS;
 
 function loadGame(filledSlots: number): void {
   const filled = Array.from({ length: CROP_SLOTS }, (_, i) => i < filledSlots);
-  useStore.setState({ game: { ...initialState(), wheel: { filled } }, isPanelOpen: false, isWheelSpinning: false });
+  useStore.setState({ game: { ...initialState(), wheel: { filled } }, openPanel: null, isWheelSpinning: false });
 }
 
 function sidePanel(): HTMLElement {
-  return screen.getByRole('complementary');
+  return screen.getByRole('complementary', { name: /^Level/ });
 }
 
 describe('side panel', () => {

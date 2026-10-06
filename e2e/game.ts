@@ -24,9 +24,19 @@ export function rollFor(spotIndex: number): number {
   return (spotIndex + 0.5) / WHEEL_SPOTS;
 }
 
-/** The side panel, found even while closed (it is hidden from the accessibility tree then). */
+/** The ★ panel with the wheel, found even while closed (it is hidden from the accessibility tree then). */
 export function sidePanel(page: Page): Locator {
-  return page.getByRole('complementary', { includeHidden: true });
+  return page.getByRole('complementary', { name: /^Level/, includeHidden: true });
+}
+
+/** The shop panel, found even while closed. */
+export function shopPanel(page: Page): Locator {
+  return page.getByRole('complementary', { name: 'Shop', includeHidden: true });
+}
+
+/** The ✕ / rotate / ✓ buttons over the ghost in build mode. */
+export function buildControls(page: Page): Locator {
+  return page.getByRole('group', { name: 'Build controls' });
 }
 
 export async function getState(page: Page): Promise<GameState> {
@@ -68,6 +78,26 @@ export async function playerCell(page: Page): Promise<GridCell | undefined> {
 /** Does what a click on a crop would: the player walks next to it, then waters or harvests it. */
 export async function clickCrop(page: Page, uid: string): Promise<void> {
   await page.evaluate((plotUid) => window.__toft?.clickCrop(plotUid), uid);
+}
+
+/** Starts build mode with a shop item, as picking it in the shop does. */
+export async function startBuild(page: Page, itemId: string): Promise<void> {
+  await page.evaluate((id) => window.__toft?.startBuild(id), itemId);
+}
+
+/** Does what dragging the ghost to a cell would, without touching the canvas. */
+export async function moveGhost(page: Page, cell: GridCell): Promise<void> {
+  await page.evaluate((target) => window.__toft?.moveGhost(target), cell);
+}
+
+/** The ghost's cell, from data-build-cell on the game root. Fails the test when not in build mode. */
+export async function ghostCell(page: Page): Promise<GridCell> {
+  const value = (await page.getByTestId('game').getAttribute('data-build-cell')) ?? '';
+  const [x, z] = value.split(',').map(Number);
+  if (x === undefined || z === undefined || Number.isNaN(x) || Number.isNaN(z)) {
+    throw new Error(`Not in build mode (data-build-cell="${value}")`);
+  }
+  return { x, z };
 }
 
 /** Saves a full-page screenshot to test-results/ and the report. For review only: never compared pixel by pixel. */

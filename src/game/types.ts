@@ -5,6 +5,10 @@
  */
 
 export type CropId = string;
+export type DecorationId = string;
+
+/** Quarter turns, clockwise seen from above. 90 and 270 swap a footprint's width and depth. */
+export type Rotation = 0 | 90 | 180 | 270;
 
 /** Width (x) and depth (z) in grid cells. */
 export interface Footprint {
@@ -48,6 +52,28 @@ export interface CropDef {
   unlockLevel: number;
   /** Placeholder visual until real models exist. */
   color: string;
+}
+
+export interface DecorationDef {
+  id: DecorationId;
+  name: string;
+  /** At rotation 0. */
+  footprint: Footprint;
+  unlockLevel: number;
+  isRotatable: boolean;
+  /** Walls and fences block the player; a flower bed can be walked over. Nothing can be built on either. */
+  blocksWalking: boolean;
+  /** Placeholder visual until real models exist. */
+  color: string;
+}
+
+export interface PlacedDecoration {
+  uid: string;
+  decorationId: DecorationId;
+  /** Top-left cell of the rotated footprint. */
+  x: number;
+  z: number;
+  rotation: Rotation;
 }
 
 export type PlotStatus =
@@ -107,8 +133,8 @@ export interface GameState {
   islandSize: number;
   crops: PlacedCrop[];
   player: PlayerState;
-  /** 1×1 cells nothing can be placed on or walked through. */
-  walls: GridCell[];
+  /** Walls, fences, hedges and flower beds. Nothing can be built on them; some also block walking. */
+  decorations: PlacedDecoration[];
   wheel: WheelState;
   progression: ProgressionState;
   lastSpin: SpinResult | null;
@@ -121,7 +147,10 @@ export interface GameState {
  * so later they can be sent over the network and replayed on a server.
  */
 export type Action =
+  /** Plant a crop with its top-left cell at (x, z). */
   | { type: 'place'; cropId: CropId; x: number; z: number }
+  /** Build a decoration with the top-left cell of its rotated footprint at (x, z). */
+  | { type: 'build'; decorationId: DecorationId; x: number; z: number; rotation: Rotation }
   | { type: 'fulfil'; uid: string }
   | { type: 'harvest'; uid: string }
   /** Walk to a point on the island, around anything in the way. */

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ISLAND_SIZE, PLAYER_CLEARANCE, PLAYER_SPAWN, STARTING_WALLS, WALK_CELLS_PER_SECOND } from './config.ts';
+import { stoneWallsAt } from './decorations.ts';
 import { cellOf, distanceBetween, findPath } from './path.ts';
 import { canPlace } from './placement.ts';
 import { applyAction, initialState } from './rules.ts';
@@ -63,24 +64,24 @@ describe('findPath', () => {
   });
 
   it('walks around crop footprints', () => {
-    const state = { ...initialState(), walls: [], crops: [carrotAt({ x: 1, z: 0 })] };
+    const state = { ...initialState(), decorations: [], crops: [carrotAt({ x: 1, z: 0 })] };
     const path = findPath(state, { x: 0, z: 0 }, { x: 2, z: 0 }) ?? [];
     expect(path.at(-1)).toEqual({ x: 2, z: 0 });
     expect(closestApproach({ x: 0, z: 0 }, path, { x: 1, z: 0 })).toBeGreaterThan(0);
   });
 
   it('never squeezes between two blocked cells that only touch at a corner', () => {
-    const state = { ...initialState(), walls: [{ x: 1, z: 0 }], crops: [carrotAt({ x: 0, z: 1 })] };
+    const state = { ...initialState(), decorations: stoneWallsAt([{ x: 1, z: 0 }]), crops: [carrotAt({ x: 0, z: 1 })] };
     expect(findPath(state, { x: 0, z: 0 }, { x: 1, z: 1 })).toBeUndefined();
   });
 
   it('is empty when already there, and undefined for a blocked, off-island or unreachable point', () => {
     const boxedIn = {
       ...initialState(),
-      walls: [
+      decorations: stoneWallsAt([
         { x: LAST - 1, z: LAST },
         { x: LAST, z: LAST - 1 },
-      ],
+      ]),
     };
     expect(findPath(initialState(), PLAYER_SPAWN, PLAYER_SPAWN)).toEqual([]);
     expect(findPath(initialState(), PLAYER_SPAWN, STARTING_WALLS[0] ?? MIDDLE)).toBeUndefined();

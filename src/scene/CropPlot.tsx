@@ -4,11 +4,12 @@ import { useFrame } from '@react-three/fiber';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { Group, Mesh, MeshStandardMaterial } from 'three';
 import { getCrop, growthProgress, isReady } from '../game/index.ts';
-import type { CropDef, PlacedCrop } from '../game/index.ts';
+import type { PlacedCrop } from '../game/index.ts';
 import { now } from '../state/clock.ts';
-import { walkToCrop } from '../state/interaction.ts';
+import { tapCrop } from '../state/interaction.ts';
 import { wasDrag } from './pointer.ts';
-import { footprintCenter } from './coords.ts';
+import { footprintCenter, worldToIsland } from './coords.ts';
+import { PlantCone, SoilBed } from './models/CropModel.tsx';
 
 const SEEDLING_SCALE = 0.25;
 const NEEDS_WATER_COLOR = '#4aa8e8';
@@ -50,26 +51,8 @@ function usePlotAnimation(plot: PlacedCrop): { plant: RefObject<Group | null>; m
   return { plant, marker };
 }
 
-function SoilBed({ crop }: { crop: CropDef }): ReactElement {
-  return (
-    <mesh position={[0, 0.05, 0]} receiveShadow>
-      <boxGeometry args={[crop.footprint.w * 0.9, 0.1, crop.footprint.d * 0.9]} />
-      <meshStandardMaterial color="#6b4a2f" />
-    </mesh>
-  );
-}
-
-function PlantCone({ crop }: { crop: CropDef }): ReactElement {
-  const radius = 0.32 * Math.min(crop.footprint.w, crop.footprint.d) + 0.05;
-  return (
-    <mesh position={[0, 0.45, 0]} castShadow>
-      <coneGeometry args={[radius, 0.8, 7]} />
-      <meshStandardMaterial color={crop.color} flatShading />
-    </mesh>
-  );
-}
-
-/** Placeholder visuals: a soil bed plus a cone that grows with progress. Clicking walks the player over to water or harvest it. */
+/** Placeholder visuals: a soil bed plus a cone that grows with progress. Clicking walks the player over to water or harvest it,
+ * or in build mode moves the ghost there. */
 export function CropPlot({ plot, islandSize }: CropPlotProps): ReactElement {
   const crop = getCrop(plot.cropId);
   const { plant, marker } = usePlotAnimation(plot);
@@ -77,15 +60,14 @@ export function CropPlot({ plot, islandSize }: CropPlotProps): ReactElement {
 
   const onClick = (event: ThreeEvent<MouseEvent>): void => {
     event.stopPropagation();
-    if (wasDrag(event)) return;
-    walkToCrop(plot.uid);
+    if (!wasDrag(event)) tapCrop(plot.uid, worldToIsland(event.point.x, event.point.z, islandSize));
   };
 
   return (
     <group position={[x, 0, z]} onClick={onClick}>
-      <SoilBed crop={crop} />
+      <SoilBed crop={crop} look="solid" />
       <group ref={plant}>
-        <PlantCone crop={crop} />
+        <PlantCone crop={crop} look="solid" />
       </group>
       {/* Floating marker: blue = needs water, yellow = ready to harvest */}
       <mesh ref={marker}>
