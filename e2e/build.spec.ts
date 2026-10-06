@@ -88,19 +88,20 @@ test('a crop can only be planted on a free cell', async ({ page }) => {
   await expect(game).toHaveAttribute('data-build-state', 'off');
 });
 
-test('the shop panel, and a ghost with its buttons', async ({ page }, testInfo) => {
+// One screenshot per test: in CI a screenshot of the software-rendered canvas takes several seconds.
+test('the shop panel, on its decorations tab', async ({ page }, testInfo) => {
   await gotoGame(page);
-  await loadState(page, { player: STANDING_AT_SPAWN });
-
   await page.getByRole('button', { name: 'Shop' }).click();
+  await shopPanel(page).getByRole('tab', { name: 'Decorations' }).click();
   await expect(shopPanel(page)).toHaveAttribute('data-state', 'open');
   await expect(shopPanel(page)).toBeInViewport();
   await expect(sidePanel(page)).toHaveAttribute('data-state', 'closed');
-  await saveScreenshot(page, testInfo, 'shop-crops');
-  await shopPanel(page).getByRole('tab', { name: 'Decorations' }).click();
   await saveScreenshot(page, testInfo, 'shop-decorations');
+});
 
-  await page.keyboard.press('Escape');
+test('a ghost with its buttons', async ({ page }, testInfo) => {
+  await gotoGame(page);
+  await loadState(page, { player: STANDING_AT_SPAWN });
   await startBuild(page, 'wooden-fence');
   await expect(page.getByTestId('game')).toHaveAttribute('data-build-state', 'valid');
   for (const name of ['Cancel', 'Rotate', 'Confirm']) {

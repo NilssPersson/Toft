@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { cellKey } from '../game/index.ts';
 import { buildStatus } from '../state/build.ts';
@@ -18,17 +18,20 @@ function readSignal(): BuildSignal {
 }
 
 /**
- * Reports build mode and whether the ghost's spot is valid, checked every frame (the player walking can change it)
- * but passed on only when it changes.
+ * Reports build mode and whether the ghost's spot is valid, passed on only when it changes. Checked on every store
+ * change, so it follows the ghost at once even while frames are slow, and every frame, since the player walking
+ * onto or off the ghost's cell changes it without a store change.
  */
 export function BuildStateSignal({ onChange }: { onChange: (signal: BuildSignal) => void }): null {
   const last = useRef('');
-  useFrame(() => {
+  const report = (): void => {
     const signal = readSignal();
     const key = `${signal.status} ${signal.cell}`;
     if (key === last.current) return;
     last.current = key;
     onChange(signal);
-  });
+  };
+  useEffect(() => useStore.subscribe(report));
+  useFrame(report);
   return null;
 }
