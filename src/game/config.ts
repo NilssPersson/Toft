@@ -9,6 +9,9 @@ export const PLAYER_SPAWN: GridCell = { x: 2, z: 6 };
 
 export const WALK_CELLS_PER_SECOND = 4;
 
+/** How far, in cells, the player keeps from walls, crops and the island's edge when cutting across. */
+export const PLAYER_CLEARANCE = 0.3;
+
 /** Between the spawn cell and the middle of the island, so the first walk there goes around it. */
 export const STARTING_WALLS: GridCell[] = [{ x: 4, z: 6 }];
 

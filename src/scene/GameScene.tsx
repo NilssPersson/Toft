@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { OrbitControls } from '@react-three/drei';
+import { FollowCamera } from './FollowCamera.tsx';
 import { Island } from './Island.tsx';
 
 export function GameScene(): ReactElement {
@@ -26,14 +26,7 @@ export function GameScene(): ReactElement {
 
       <Island />
 
-      <OrbitControls
-        target={[0, 0, 0]}
-        enablePan={false}
-        minDistance={8}
-        maxDistance={30}
-        minPolarAngle={0.35}
-        maxPolarAngle={1.2}
-      />
+      <FollowCamera />
     </>
   );
 }

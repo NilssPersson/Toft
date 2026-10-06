@@ -6,7 +6,7 @@ import { useStore } from '../state/store.ts';
 const WELCOME_SEEN_KEY = 'toft-welcome-seen';
 const WELCOME_MS = 8000;
 const PLACING_TEXT = 'Tap the island to plant · Esc to stop';
-const WELCOME_TEXT = 'Pick a crop to plant · tap blue to water, yellow to harvest';
+const WELCOME_TEXT = 'Tap to walk · buy crops from the basket · tap blue to water, yellow to harvest';
 
 function hasSeenWelcome(): boolean {
   try {
@@ -36,7 +36,7 @@ function useWelcome(): boolean {
   return isShowing;
 }
 
-/** A small note above the bottom bar: how to plant while a crop is picked, and a welcome on the first visit. */
+/** A small note at the bottom: how to plant while a crop is picked, and a welcome on the first visit. */
 export function HintToast(): ReactElement | null {
   const isPlacing = useStore((state) => state.selectedCrop !== null);
   const isWelcome = useWelcome();

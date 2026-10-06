@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import type { ReactElement } from 'react';
 import { useStore } from '../state/store.ts';
 import { BuyMenu } from './BuyMenu.tsx';
-import { CropHotbar } from './CropHotbar.tsx';
 import { FullscreenButton, useFullscreenOnFirstInteraction } from './Fullscreen.tsx';
 import { HintToast } from './HintToast.tsx';
 import { LevelChip } from './LevelChip.tsx';
@@ -53,7 +52,6 @@ export function Hud(): ReactElement {
       <SystemButtons />
       <StarButton />
       <HintToast />
-      <CropHotbar />
     </div>
   );
 }

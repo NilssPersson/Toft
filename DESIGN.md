@@ -7,8 +7,9 @@
 
 ## Player
 
-- Each island has one player character standing on a grid cell. Clicking an empty cell walks it there along the shortest path, one cell at a time, up, down, left or right.
-- Walls (1×1) and crops block the way; the player walks around them. A target it can't reach does nothing.
+- Each island has one player character. Clicking anywhere on open ground walks it to that exact point, in straight lines at any angle, not cell by cell.
+- Walls (1×1) and crops block the way; the player walks around them, keeping a little distance. A target it can't reach does nothing.
+- The camera follows the player. Dragging turns it around the player at a fixed tilt, so it never looks up at the player; zooming in and out is allowed.
 - Watering and harvesting need the player next to the crop. Clicking a crop walks the player to the nearest free cell beside it, then waters or harvests it on arrival.
 
 ## Crops
@@ -44,4 +45,4 @@ Assumptions the prototype makes that need a decision. Each is marked in code.
 6. **Does planting need the player nearby?** Prototype: no. With a crop picked, clicking the ground plants it there without walking, and the player only walks when no crop is picked. `src/scene/Island.tsx`
 7. **Old saves with a crop on the new wall or spawn cell?** Prototype: crops are never removed. A wall a crop covers is left out, and the player starts on the free cell nearest the spawn cell (nearest by steps, ties broken by lowest x, then lowest z). `src/game/migrate.ts`
 8. **Planting on the player's path.** A crop can't go on the cell the player stands on, but it can go on a cell further along a walk in progress; the path was fixed when the walk started, so the player walks through it. Prototype: allowed. `src/game/placement.ts`
-9. **When is the player "next to" a crop while walking?** Prototype: only on the cells it has fully reached; mid-step it still counts as on the cell it is leaving. A new click mid-step finishes that step first. `src/game/path.ts`
+9. **When is the player "next to" a crop while walking?** Prototype: whenever the point it stands on is in a cell beside the crop, even while passing by. A new click mid-walk turns at once from where it is. `src/game/walk.ts`

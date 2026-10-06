@@ -18,6 +18,15 @@ export interface GridCell {
   z: number;
 }
 
+/**
+ * A point anywhere on the island, in cell units: cell (x, z) has its centre at (x, z)
+ * and reaches 0.5 to each side. The player stands and walks on points, not only on cell centres.
+ */
+export interface IslandPoint {
+  x: number;
+  z: number;
+}
+
 /** A footprint positioned on the grid, with its top-left cell at (x, z). */
 export interface Placement {
   x: number;
@@ -81,15 +90,15 @@ export interface SpinResult {
 }
 
 /**
- * The player walks one cell at a time along `path`. Only the start of a walk is stored;
- * where the player is at any moment is derived from the path, the start time and the walking speed.
+ * The player walks in straight lines, at any angle, from point to point along `path`. Only the start of a walk
+ * is stored; where the player is at any moment is derived from the path, the start time and the walking speed.
  */
 export interface PlayerState {
-  /** The cell the current walk started from; where the player stands while `path` is empty. */
+  /** The point the current walk started from; where the player stands while `path` is empty. */
   x: number;
   z: number;
-  /** The cells still to step into, in order, after (x, z). Empty when not walking. */
-  path: GridCell[];
+  /** The points still to walk to, in order, after (x, z). Empty when not walking. */
+  path: IslandPoint[];
   /** Epoch ms when the player started walking `path`. */
   walkStartedAt: number;
 }
@@ -115,7 +124,7 @@ export type Action =
   | { type: 'place'; cropId: CropId; x: number; z: number }
   | { type: 'fulfil'; uid: string }
   | { type: 'harvest'; uid: string }
-  /** Walk to a cell along the shortest path. */
+  /** Walk to a point on the island, around anything in the way. */
   | { type: 'move'; x: number; z: number }
   /** roll is a number in [0, 1) supplied by the caller (Math.random locally, a server later). */
   | { type: 'spin'; roll: number };

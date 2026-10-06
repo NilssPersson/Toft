@@ -28,7 +28,7 @@ export function App(): ReactElement {
   useEffect(installTestHookInTestBuilds, []);
   return (
     <div className="game" data-testid="game" data-ready="false" data-player-state="idle" ref={root}>
-      <Canvas shadows camera={{ position: [11, 12, 11], fov: 40 }} dpr={[1, 2]}>
+      <Canvas shadows camera={{ position: [7, 8, 7], fov: 40 }} dpr={[1, 2]}>
         <GameScene />
         <ReadySignal onFirstFrame={markReady} />
         <PlayerStateSignal onChange={markPlayer} />

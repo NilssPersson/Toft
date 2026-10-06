@@ -1,7 +1,7 @@
 // What a click on the island does, apart from planting: walk somewhere, or walk to a crop and tend it.
 // The scene calls these on clicks and every frame; the test hook calls them in place of clicks.
 import { approachCell, isNextToPlot, isReady, playerCell } from '../game/index.ts';
-import type { Action, PlacedCrop } from '../game/index.ts';
+import type { Action, IslandPoint, PlacedCrop } from '../game/index.ts';
 import { now } from './clock.ts';
 import { useStore } from './store.ts';
 
@@ -12,8 +12,8 @@ function plotAction(plot: PlacedCrop, at: number): Action | null {
   return null;
 }
 
-/** Walks to a cell, dropping any crop the player was on its way to. */
-export function walkToCell(x: number, z: number): void {
+/** Walks to a point, dropping any crop the player was on its way to. */
+export function walkToPoint({ x, z }: IslandPoint): void {
   const { dispatch, setPendingCrop } = useStore.getState();
   setPendingCrop(null);
   dispatch({ type: 'move', x, z });

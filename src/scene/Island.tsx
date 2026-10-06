@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { ThreeEvent } from '@react-three/fiber';
-import { canPlace, getCrop } from '../game/index.ts';
-import type { Placement } from '../game/index.ts';
+import { canPlace, cellOf, getCrop } from '../game/index.ts';
+import type { IslandPoint, Placement } from '../game/index.ts';
 import { now } from '../state/clock.ts';
-import { walkToCell } from '../state/interaction.ts';
+import { walkToPoint } from '../state/interaction.ts';
 import { useStore } from '../state/store.ts';
 import { CropPlot } from './CropPlot.tsx';
 import { Player } from './Player.tsx';
 import { Walls } from './Walls.tsx';
-import { footprintCenter, worldToCell } from './coords.ts';
+import { wasDrag } from './pointer.ts';
+import { footprintCenter, worldToCell, worldToIsland } from './coords.ts';
 
 const SURFACE_Y = 0;
 
@@ -42,15 +43,16 @@ function IslandBody({ size }: { size: number }): ReactElement {
 
 interface IslandGroundProps {
   size: number;
-  onCellClick: (cell: Cell) => void;
+  onGroundClick: (point: IslandPoint) => void;
 }
 
 /** The grass top: the click target for planting and walking, and the hover target for placement. */
-function IslandGround({ size, onCellClick }: IslandGroundProps): ReactElement {
+function IslandGround({ size, onGroundClick }: IslandGroundProps): ReactElement {
   const { hover, onMove, onLeave } = usePlacementHover(size);
   const onClick = (event: ThreeEvent<MouseEvent>): void => {
     event.stopPropagation();
-    onCellClick(worldToCell(event.point.x, event.point.z, size));
+    if (wasDrag(event)) return;
+    onGroundClick(worldToIsland(event.point.x, event.point.z, size));
   };
   return (
     <>
@@ -97,16 +99,18 @@ export function Island(): ReactElement {
   const selected = useStore((state) => state.selectedCrop);
   const dispatch = useStore((state) => state.dispatch);
 
-  // With a crop picked, a click plants it without walking there (DESIGN.md "Open questions"); otherwise the player walks.
-  const onCellClick = ([x, z]: Cell): void => {
+  // With a crop picked, a click plants it in that cell without walking there (DESIGN.md "Open questions");
+  // otherwise the player walks to the exact point.
+  const onGroundClick = (point: IslandPoint): void => {
+    const { x, z } = cellOf(point);
     if (selected) dispatch({ type: 'place', cropId: selected, x, z });
-    else walkToCell(x, z);
+    else walkToPoint(point);
   };
 
   return (
     <group>
       <IslandBody size={size} />
-      <IslandGround size={size} onCellClick={onCellClick} />
+      <IslandGround size={size} onGroundClick={onGroundClick} />
       <gridHelper args={[size, size, '#6fa54d', '#7fb65a']} position={[0, SURFACE_Y + 0.01, 0]} />
       {crops.map((plot) => (
         <CropPlot key={plot.uid} plot={plot} islandSize={size} />
