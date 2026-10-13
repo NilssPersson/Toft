@@ -9,7 +9,7 @@ export function UpdatePrompt(): ReactElement | null {
   return (
     <div className="panel update-prompt" role="status">
       Update available
-      <button className="spin-button" onClick={restartIntoUpdate}>
+      <button className="accent-button" onClick={restartIntoUpdate}>
         Restart
       </button>
     </div>

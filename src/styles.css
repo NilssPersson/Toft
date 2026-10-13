@@ -8,6 +8,13 @@
   --star: #e8a92a;
   --badge: #d65a4a;
   --locked: #ece6da;
+  --wheel-wood: #7a5236;
+  --wheel-gold: #f2c14e;
+  --wheel-rim: #fff4d6;
+  --wheel-tile-brown: #b3855a;
+  --wheel-gold-edge: #d9a52e;
+  --recipe-slot: #ffffff;
+  --recipe-icon-size: 32px;
   --shadow: 0 6px 18px rgb(0 0 0 / 0.12);
 
   /* HUD scale: one tile size, one spacing scale. Landscape phones override these below. */
@@ -221,7 +228,7 @@ body {
   white-space: nowrap;
 }
 
-.update-prompt .spin-button {
+.update-prompt .accent-button {
   width: auto;
   min-height: 0;
   padding: 6px 12px;
@@ -364,15 +371,59 @@ body {
   z-index: 1;
 }
 
-.wheel-label {
-  font-size: 10px;
-  font-weight: 700;
-  fill: var(--ink);
+.wheel-multiplier {
+  font-size: 22px;
+  font-weight: 800;
+  fill: var(--wheel-tile-brown);
   text-anchor: middle;
-  dominant-baseline: middle;
+  dominant-baseline: central;
 }
 
-.spin-button {
+.wheel-multiplier.is-gold {
+  fill: var(--paper);
+  stroke: var(--wheel-wood);
+  stroke-width: 1.5px;
+  paint-order: stroke;
+}
+
+/* The round Spin button in the hub of the wheel; it doesn't turn with the wheel. */
+.hub-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30%;
+  height: 30%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-content: center;
+  border: 4px solid var(--wheel-rim);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: var(--shadow);
+  color: var(--accent-ink);
+  font: inherit;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.hub-button-label {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.hub-button-count {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.hub-button:disabled {
+  background: var(--paper-edge);
+  color: var(--ink);
+  cursor: default;
+}
+
+.accent-button {
   width: 100%;
   min-height: var(--tile-size);
   padding: var(--space-2);
@@ -385,9 +436,42 @@ body {
   cursor: pointer;
 }
 
-.spin-button:disabled {
-  opacity: 0.45;
-  cursor: default;
+/* Beside the ★ while the wheel is closed: the crops the next spin needs. */
+.recipe-strip {
+  position: absolute;
+  bottom: var(--hud-gap);
+  left: calc(var(--hud-gap) + var(--tile-size) + var(--space-2));
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--tile-size);
+  margin: 0;
+  padding: 0 var(--space-2);
+  list-style: none;
+  border: 2px solid var(--paper-edge);
+  border-radius: var(--tile-radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.recipe-strip li {
+  display: grid;
+  place-items: center;
+  width: var(--recipe-icon-size);
+  height: var(--recipe-icon-size);
+  border: 2px solid var(--paper-edge);
+  border-radius: 8px;
+  background: var(--recipe-slot);
+}
+
+.recipe-strip li.is-filled {
+  border-color: var(--wheel-gold-edge);
+  background: var(--wheel-gold);
+}
+
+.crop-icon {
+  width: 80%;
+  height: 80%;
 }
 
 /* The last row, beside the ★. */
@@ -582,6 +666,7 @@ body {
     --panel-radius: 12px;
     --hud-gap: var(--space-2);
     --panel-width: min(40vw, 300px);
+    --recipe-icon-size: 28px;
   }
 
   .level-chip {
@@ -593,7 +678,11 @@ body {
   .side-panel {
     gap: var(--space-2);
   }
+  .hub-button-label {
+    font-size: 15px;
+  }
   .progress-label,
+  .hub-button-count,
   .spin-result,
   .hint-toast {
     font-size: 12px;

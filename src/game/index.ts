@@ -6,5 +6,6 @@ export * from './path.ts';
 export * from './walk.ts';
 export * from './placement.ts';
 export * from './migrate.ts';
+export * from './recipes.ts';
 export * from './wheel.ts';
 export * from './rules.ts';

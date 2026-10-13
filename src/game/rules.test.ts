@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { applyAction, initialState, isReady } from './rules.ts';
 import {
   CROP_SLOTS,
+  CROP_SPOTS,
+  EMPTY_SPOT,
   ISLAND_SIZE,
+  LEVEL_RECIPES,
   MULTIPLIER_SPOT,
-  RESET_SPOT,
   WHEEL_SPOTS,
   multiplierBonus,
   spinsRequired,
@@ -26,12 +28,22 @@ function standAt(state: GameState, x: number, z: number): GameState {
   return { ...state, player: { x, z, path: [], walkStartedAt: 0 } };
 }
 
-function growAndHarvestCarrot(state: GameState, x: number, t0: number): GameState {
-  const planted = applyAction(standAt(state, x, 1), { type: 'place', cropId: 'carrot', x, z: 0 }, t0);
-  const uid = cropAt(planted, -1).uid;
-  const growing = applyAction(planted, { type: 'fulfil', uid }, t0);
-  return applyAction(growing, { type: 'harvest', uid }, t0 + 10_000);
+/** The spot that shows crop slot i. */
+function cropSpot(slot: number): number {
+  const spot = CROP_SPOTS[slot];
+  if (spot === undefined) throw new Error(`No crop slot ${slot}`);
+  return spot;
 }
+
+/** Plants a crop at (x, 0), waters it, waits and harvests it. */
+function growAndHarvest(state: GameState, cropId: string, x: number): GameState {
+  const planted = applyAction(standAt(state, x, 1), { type: 'place', cropId, x, z: 0 }, 0);
+  const uid = cropAt(planted, -1).uid;
+  const growing = applyAction(planted, { type: 'fulfil', uid }, 0);
+  return applyAction(growing, { type: 'harvest', uid }, 1_000_000);
+}
+
+const allFilled = (): boolean[] => Array.from({ length: CROP_SLOTS }, () => true);
 
 describe('grid', () => {
   it('rejects out-of-bounds and overlapping placements', () => {
@@ -60,7 +72,27 @@ describe('crop growth', () => {
     state = applyAction(state, { type: 'harvest', uid }, 11_000);
     expect(state.crops).toHaveLength(1);
     expect(cropAt(state, 0).status).toBe('needsRequirement');
-    expect(state.wheel.filled[0]).toBe(true);
+  });
+});
+
+describe('filling the wheel', () => {
+  it('a harvest fills the first empty slot whose recipe needs that crop', () => {
+    let state = growAndHarvest(initialState(), 'wheat', 0);
+    expect(state.wheel.filled).toEqual([true, false, false, false, false, false]);
+    state = growAndHarvest(state, 'wheat', 1);
+    expect(state.wheel.filled).toEqual([true, true, false, false, false, false]);
+  });
+
+  it('a crop the recipe does not need fills nothing', () => {
+    const state = growAndHarvest(initialState(), 'carrot', 0);
+    expect(state.wheel.filled.some(Boolean)).toBe(false);
+  });
+
+  it("follows the level's recipe for the current win", () => {
+    const secondSpin = { ...initialState(), progression: { level: 1, spinsRemaining: spinsRequired(1) - 1 } };
+    const state = growAndHarvest(secondSpin, 'carrot', 0);
+    const carrotSlot = LEVEL_RECIPES[0]?.[1]?.indexOf('carrot');
+    expect(state.wheel.filled.findIndex(Boolean)).toBe(carrotSlot);
   });
 });
 
@@ -71,44 +103,49 @@ describe('wheel', () => {
   });
 
   it('a filled crop slot is a win and consumes the filled slots', () => {
-    let state = growAndHarvestCarrot(initialState(), 0, 0);
-    state = applyAction(state, { type: 'spin', roll: rollFor(0) }, 0);
+    let state = growAndHarvest(initialState(), 'wheat', 0);
+    state = applyAction(state, { type: 'spin', roll: rollFor(cropSpot(0)) }, 0);
     expect(state.lastSpin?.outcome).toBe('win');
     expect(state.progression.spinsRemaining).toBe(spinsRequired(1) - 1);
     expect(state.wheel.filled.every((isFilled) => !isFilled)).toBe(true);
   });
 
-  it('an unfilled slot or the reset spot resets progress', () => {
-    let state = growAndHarvestCarrot(initialState(), 0, 0);
-    state = applyAction(state, { type: 'spin', roll: rollFor(0) }, 0);
-    state = growAndHarvestCarrot(state, 1, 0);
-    const afterMiss = applyAction(state, { type: 'spin', roll: rollFor(3) }, 0);
-    expect(afterMiss.lastSpin?.outcome).toBe('reset');
-    expect(afterMiss.progression.spinsRemaining).toBe(spinsRequired(1));
-    const afterReset = applyAction(state, { type: 'spin', roll: rollFor(RESET_SPOT) }, 0);
-    expect(afterReset.lastSpin?.outcome).toBe('reset');
+  it.each([
+    ['the empty spot', EMPTY_SPOT],
+    ['an unfilled slot', cropSpot(5)],
+    ['the multiplier before all slots are filled', MULTIPLIER_SPOT],
+  ])("%s loses the filled slots but never the level's progress", (_name, spot) => {
+    let state = growAndHarvest(initialState(), 'wheat', 0);
+    state = applyAction(state, { type: 'spin', roll: rollFor(cropSpot(0)) }, 0);
+    state = growAndHarvest(state, 'wheat', 1);
+    const progression = state.progression;
+    state = applyAction(state, { type: 'spin', roll: rollFor(spot) }, 0);
+    expect(state.lastSpin).toMatchObject({ outcome: 'miss', progress: 0 });
+    expect(state.progression).toEqual(progression);
+    expect(state.progression.spinsRemaining).toBe(spinsRequired(1) - 1);
+    expect(state.wheel.filled.some(Boolean)).toBe(false);
   });
 
   it('the multiplier only pays out once all slots are filled', () => {
-    let state = growAndHarvestCarrot(initialState(), 0, 0);
-    expect(applyAction(state, { type: 'spin', roll: rollFor(MULTIPLIER_SPOT) }, 0).lastSpin?.outcome).toBe('reset');
+    let state = growAndHarvest(initialState(), 'wheat', 0);
+    expect(applyAction(state, { type: 'spin', roll: rollFor(MULTIPLIER_SPOT) }, 0).lastSpin?.outcome).toBe('miss');
 
-    state = {
-      ...state,
-      progression: { level: 1, spinsRemaining: 10 },
-      wheel: { filled: Array.from({ length: CROP_SLOTS }, () => true) },
-    };
+    state = { ...state, progression: { level: 1, spinsRemaining: 4 }, wheel: { filled: allFilled() } };
     state = applyAction(state, { type: 'spin', roll: rollFor(MULTIPLIER_SPOT) }, 0);
     expect(state.lastSpin?.outcome).toBe('multiplier');
-    expect(state.progression.spinsRemaining).toBe(10 - multiplierBonus(1));
+    expect(state.progression.spinsRemaining).toBe(4 - multiplierBonus(1));
   });
 
-  it('levels up when the required wins are reached', () => {
+  it('levels up once every recipe of the level is won', () => {
     let state = initialState();
     for (let i = 0; i < spinsRequired(1); i++) {
-      state = growAndHarvestCarrot(state, i, i * 100_000);
-      state = applyAction(state, { type: 'spin', roll: rollFor(0) }, 0);
+      state = applyAction(
+        { ...state, wheel: { filled: allFilled() } },
+        { type: 'spin', roll: rollFor(cropSpot(0)) },
+        0,
+      );
     }
+    expect(spinsRequired(1)).toBe(LEVEL_RECIPES[0]?.length);
     expect(state.progression.level).toBe(2);
     expect(state.progression.spinsRemaining).toBe(spinsRequired(2));
     expect(state.lastSpin?.leveledUp).toBe(true);

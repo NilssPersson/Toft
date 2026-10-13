@@ -1,20 +1,12 @@
-import {
-  CROPS,
-  CROP_SLOTS,
-  DECORATIONS_BY_ID,
-  ISLAND_SIZE,
-  PLAYER_SPAWN,
-  STARTING_WALLS,
-  getCrop,
-  spinsRequired,
-} from './config.ts';
+import { DECORATIONS_BY_ID, ISLAND_SIZE, PLAYER_SPAWN, STARTING_WALLS, getCrop, spinsRequired } from './config.ts';
 import { stoneWallsAt } from './decorations.ts';
 import { rotatedFootprint } from './grid.ts';
 import { isNextToPlot } from './path.ts';
 import { isWalking, playerCell, walkTo } from './walk.ts';
 import { canPlace } from './placement.ts';
+import { currentRecipe, slotToFill } from './recipes.ts';
 import { canSpin, emptyWheel, resolveSpin } from './wheel.ts';
-import type { Action, CropDef, CropId, GameState, PlacedCrop, PlacedDecoration, Rotation } from './types.ts';
+import type { Action, CropId, GameState, PlacedCrop, PlacedDecoration, Rotation } from './types.ts';
 
 type ActionOf<T extends Action['type']> = Extract<Action, { type: T }>;
 type ActionHandler<T extends Action['type']> = (state: GameState, action: ActionOf<T>, now: number) => GameState;
@@ -30,21 +22,6 @@ export function initialState(): GameState {
     lastSpin: null,
     nextUid: 1,
   };
-}
-
-export function unlockedCrops(level: number): CropDef[] {
-  return CROPS.filter((crop) => crop.unlockLevel <= level).sort(
-    (first, second) => first.unlockLevel - second.unlockLevel,
-  );
-}
-
-/**
- * Which wheel slot a crop fills: slot i belongs to the i-th unlocked crop.
- * Returns -1 if the crop has no slot (locked, or beyond the 6 slots — an open design question).
- */
-export function wheelSlotFor(cropId: CropId, level: number): number {
-  const idx = unlockedCrops(level).findIndex((crop) => crop.id === cropId);
-  return idx >= 0 && idx < CROP_SLOTS ? idx : -1;
 }
 
 /** 0..1 growth progress; 0 while waiting for its requirement. */
@@ -72,9 +49,9 @@ function updatePlot(state: GameState, uid: string, patch: Partial<PlacedCrop>): 
   return { ...state, crops: state.crops.map((plot) => (plot.uid === uid ? { ...plot, ...patch } : plot)) };
 }
 
-/** Marks the wheel slot that belongs to a crop as filled, if it has one. */
+/** Fills the first empty wheel slot whose recipe needs this crop, if any does. */
 function fillWheelSlot(state: GameState, cropId: CropId): GameState {
-  const slot = wheelSlotFor(cropId, state.progression.level);
+  const slot = slotToFill(state.wheel, currentRecipe(state.progression), cropId);
   if (slot < 0) return state;
   const filled = state.wheel.filled.slice();
   filled[slot] = true;

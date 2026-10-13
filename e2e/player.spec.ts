@@ -48,10 +48,10 @@ test('the player walks straight across open ground, at any angle', async ({ page
 
 test('clicking a ready crop walks the player to it and harvests it', async ({ page }) => {
   await gotoGame(page);
-  const growMs = getCrop('carrot').growSeconds * 1000;
-  const carrot = { uid: 'p1', cropId: 'carrot', ...MIDDLE, status: 'growing' as const };
+  const growMs = getCrop('wheat').growSeconds * 1000;
+  const wheat = { uid: 'p1', cropId: 'wheat', ...MIDDLE, status: 'growing' as const };
   await loadState(page, {
-    crops: [{ ...carrot, growStartedAt: (await gameNow(page)) - growMs }],
+    crops: [{ ...wheat, growStartedAt: (await gameNow(page)) - growMs }],
     nextUid: 2,
     player: STANDING_AT_SPAWN,
   });
