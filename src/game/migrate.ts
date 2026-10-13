@@ -1,6 +1,7 @@
-import { ISLAND_SIZE, PLAYER_SPAWN, STARTING_WALLS } from './config.ts';
+import { ISLAND_SIZE, PLAYER_SPAWN, STARTING_WALLS, spinsRequired } from './config.ts';
 import { stoneWallsAt } from './decorations.ts';
 import { cellKey, isOnIsland, occupiedCells } from './grid.ts';
+import { emptyWheel } from './wheel.ts';
 import type { GameState, GridCell, IslandPoint, PlayerState } from './types.ts';
 
 /** A save from before decorations, when the only thing built was a 1×1 wall (persist versions 2 and 3). */
@@ -66,4 +67,15 @@ export function growIsland(game: GameStateV3): GameStateV3 {
 export function wallsToDecorations(game: GameStateV3): GameState {
   const { walls, ...rest } = game;
   return { ...rest, decorations: stoneWallsAt(walls) };
+}
+
+/**
+ * Moves a save from before recipes onto them: its filled slots belonged to the old slot order, so they are emptied,
+ * the last spin (which may name the old reset spot) is forgotten, and the wins still needed never exceed the level's
+ * new number of recipes.
+ */
+export function resetWheel(game: GameState): GameState {
+  const { level, spinsRemaining } = game.progression;
+  const progression = { level, spinsRemaining: Math.min(spinsRemaining, spinsRequired(level)) };
+  return { ...game, wheel: emptyWheel(), progression, lastSpin: null };
 }

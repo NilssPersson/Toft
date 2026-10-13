@@ -190,7 +190,7 @@ describe('tending needs the player next to the crop', () => {
     const far = standAt({ ...initialState(), crops: [growing] }, { x: 0, z: 0 });
     expect(applyAction(far, { type: 'harvest', uid: 'p1' }, now)).toBe(far);
     const near = standAt(far, { x: 5, z: 1 });
-    expect(applyAction(near, { type: 'harvest', uid: 'p1' }, now).wheel.filled[0]).toBe(true);
+    expect(applyAction(near, { type: 'harvest', uid: 'p1' }, now).crops[0]?.status).toBe('needsRequirement');
   });
 
   it('counts the whole footprint of a larger crop', () => {

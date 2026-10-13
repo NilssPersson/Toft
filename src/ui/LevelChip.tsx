@@ -1,10 +1,10 @@
 import type { ReactElement } from 'react';
-import { useStore } from '../state/store.ts';
+import { shownProgression, useStore } from '../state/store.ts';
 import { panelId } from './SidePanel.tsx';
 
 /** "Level N" in the top-left corner. Tapping it opens or closes the ★ panel; while that is open it reads as its heading. */
 export function LevelChip(): ReactElement {
-  const level = useStore((state) => state.game.progression.level);
+  const level = useStore((state) => shownProgression(state).level);
   const isWheelOpen = useStore((state) => state.openPanel === 'wheel');
   const togglePanel = useStore((state) => state.togglePanel);
   return (

@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { CROP_SLOTS, spinsRequired } from '../src/game/index.ts';
+import { CROP_SLOTS, CROP_SPOTS, spinsRequired } from '../src/game/index.ts';
 import { getState, gotoGame, loadState, rollFor, setNextRoll, sidePanel } from './game.ts';
 
 test('a winning spin shows the result and moves level progress on', async ({ page }) => {
   await gotoGame(page);
   await loadState(page, { wheel: { filled: Array.from({ length: CROP_SLOTS }, () => true) } });
-  await setNextRoll(page, rollFor(0));
+  await setNextRoll(page, rollFor(CROP_SPOTS[0] ?? 0));
 
   await page.getByRole('button', { name: 'Wheel (ready to spin)' }).click();
   const panel = sidePanel(page);

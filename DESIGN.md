@@ -35,11 +35,13 @@
 
 - Levelling up takes a set number of wheel wins: 5 at level 1, rising each level.
 - New crops unlock every 5 or 10 levels.
-- The wheel has 8 spots: 6 crop slots (one per unlocked crop), 1 multiplier, 1 reset.
-- Harvesting a crop fills its matching slot. You can spin with just one slot filled (1/8 odds) or wait to fill all six, which enables the multiplier.
+- The wheel has 8 spots. Clockwise from the top: the multiplier, three crop slots, an empty spot at the bottom, three more crop slots.
+- Each spin has a hand-written **recipe**: the crop each of the 6 slots needs (level 1's first spin is 6 wheat). A level is a list of recipes, one per win, so its length is the wins the level takes. Recipes live in `LEVEL_RECIPES` in `src/game/config.ts`.
+- Harvesting a crop fills the first empty slot whose recipe needs that crop; a crop the recipe doesn't need fills nothing. You can spin with just one slot filled (1/8 odds) or wait to fill all six, which enables the multiplier.
+- While the wheel is closed, the 6 crops the next spin needs show beside the ★, filled ones bright.
 - Outcomes:
-  - Filled crop slot → win, remaining spins −1.
-  - Unfilled crop slot or reset spot → progress for the current level resets to the full requirement.
+  - Filled crop slot → win, remaining spins −1, and the next spin uses the level's next recipe.
+  - Empty spot, unfilled crop slot, or the multiplier before all 6 are filled → miss: the filled slots are lost, but the level's progress is kept, so the same recipe comes up again. A spin never resets the level.
   - Multiplier (only with all 6 filled) → remaining spins drop by more than 1, scaling with level.
 
 ## Multiplayer (later)
@@ -52,9 +54,9 @@
 Assumptions the prototype makes that need a decision. Each is marked in code.
 
 1. **Does a spin consume the filled slots?** Prototype: yes, all slots empty after any spin (otherwise there is no reason to wait and fill more). `src/game/wheel.ts`
-2. **Landing on the multiplier before all 6 are filled?** Prototype: counts as a reset, which keeps the "1 filled = 1/8 odds" rule true. `src/game/wheel.ts`
+2. **Landing on the multiplier before all 6 are filled?** Prototype: counts as a miss, like an unfilled slot. `src/game/wheel.ts`
 3. **What does "needs another crop" mean in play?** (Consume a harvest? Be planted next to it?) Prototype: fulfilled the same way as water. `src/game/rules.ts`
-4. **Wheel slots with fewer than 6 crops unlocked, or more than 6?** Prototype: slot _i_ belongs to the _i_-th unlocked crop; empty slots are locked and act like misses; crops beyond the 6th get no slot. `src/game/rules.ts`
+4. **Recipes past the last written level.** Prototype: generated from the unlocked crops in turn, starting one crop further along with each win; no randomness. `src/game/recipes.ts`
 5. **Exact curves** for spins per level, multiplier bonus and unlock levels. Prototype values live in `src/game/config.ts`.
 6. **Does building need the player nearby?** Prototype: no. In build mode, confirming plants or builds where the ghost is without walking there, and taps move the ghost instead of the player. `src/state/build.ts`
 7. **Old saves with a crop on the new wall or spawn cell?** Prototype: crops are never removed. A wall a crop covers is left out, and the player starts on the free cell nearest the spawn cell (nearest by steps, ties broken by lowest x, then lowest z). `src/game/migrate.ts`
@@ -64,3 +66,4 @@ Assumptions the prototype makes that need a decision. Each is marked in code.
 11. **What does building cost?** There is no currency yet, so planting and building are free. `src/game/rules.ts`
 12. **Where does the ghost start, and where does it go after a confirm?** Prototype: "in front of the player" is the cell between the player and the camera; the nearest free cell to it within 3 steps, else the island's centre. After a confirm, the first free cell beside it, trying the direction it faces first (right at rotation 0, then clockwise), else the nearest free cell. `src/state/build.ts`
 13. **Old walls.** Saves from before decorations turn each wall into a stone wall on the same cell. `src/game/migrate.ts`
+14. **Saves from before recipes.** Prototype: their filled slots followed the old slot order, so they are emptied, and the wins still needed are capped at the level's number of recipes. `src/game/migrate.ts`

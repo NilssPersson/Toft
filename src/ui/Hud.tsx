@@ -3,6 +3,7 @@ import { useStore } from '../state/store.ts';
 import { FullscreenButton, useFullscreenOnFirstInteraction } from './Fullscreen.tsx';
 import { HintToast } from './HintToast.tsx';
 import { LevelChip } from './LevelChip.tsx';
+import { RecipeStrip } from './RecipeStrip.tsx';
 import { SettingsMenu } from './SettingsMenu.tsx';
 import { ShopButton } from './ShopButton.tsx';
 import { ShopPanel } from './ShopPanel.tsx';
@@ -36,6 +37,7 @@ export function Hud(): ReactElement {
       <LevelChip />
       <SystemButtons />
       <StarButton />
+      <RecipeStrip />
       <HintToast />
     </div>
   );

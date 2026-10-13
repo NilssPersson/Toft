@@ -1,4 +1,4 @@
-import type { CropDef, DecorationDef, GridCell } from './types.ts';
+import type { CropDef, CropId, DecorationDef, GridCell } from './types.ts';
 
 /** Tuning lives here so balancing never touches rule code. */
 
@@ -18,15 +18,44 @@ export const STARTING_WALLS: GridCell[] = [{ x: 6, z: 8 }];
 /** The decoration every starting wall, and every wall in a save from before decorations, becomes. */
 export const STONE_WALL_ID = 'stone-wall';
 
-/** The wheel always has 6 crop slots, then a multiplier spot, then a reset spot. */
-export const CROP_SLOTS = 6;
-export const WHEEL_SPOTS = CROP_SLOTS + 2;
-export const MULTIPLIER_SPOT = CROP_SLOTS;
-export const RESET_SPOT = CROP_SLOTS + 1;
+/**
+ * The wheel has 8 spots, clockwise from the top: the multiplier, three crop slots, an empty spot at the bottom,
+ * then three more crop slots. `CROP_SPOTS[i]` is the spot that shows crop slot i.
+ */
+export const WHEEL_SPOTS = 8;
+export const MULTIPLIER_SPOT = 0;
+export const EMPTY_SPOT = 4;
+export const CROP_SPOTS: readonly number[] = [1, 2, 3, 5, 6, 7];
+export const CROP_SLOTS = CROP_SPOTS.length;
 
-/** Wins needed to finish a level: 5 at level 1, then rising. */
+/** One spin's recipe: the crop each of the 6 slots needs, in slot order. */
+export type Recipe = readonly CropId[];
+
+/**
+ * The recipes of each level, one per win: `LEVEL_RECIPES[level - 1][wins]`. The number of recipes is the number
+ * of wins the level takes. Levels past the last one here get generated recipes (see recipes.ts).
+ */
+export const LEVEL_RECIPES: readonly (readonly Recipe[])[] = [
+  [
+    ['wheat', 'wheat', 'wheat', 'wheat', 'wheat', 'wheat'],
+    ['wheat', 'wheat', 'carrot', 'wheat', 'wheat', 'carrot'],
+    ['wheat', 'carrot', 'wheat', 'carrot', 'wheat', 'carrot'],
+    ['wheat', 'carrot', 'lettuce', 'wheat', 'carrot', 'lettuce'],
+    ['lettuce', 'wheat', 'lettuce', 'carrot', 'lettuce', 'wheat'],
+  ],
+  [
+    ['carrot', 'carrot', 'carrot', 'carrot', 'carrot', 'carrot'],
+    ['lettuce', 'lettuce', 'wheat', 'lettuce', 'lettuce', 'wheat'],
+    ['wheat', 'carrot', 'carrot', 'wheat', 'lettuce', 'lettuce'],
+    ['lettuce', 'lettuce', 'lettuce', 'lettuce', 'lettuce', 'lettuce'],
+    ['carrot', 'wheat', 'lettuce', 'carrot', 'wheat', 'lettuce'],
+    ['wheat', 'lettuce', 'carrot', 'carrot', 'lettuce', 'wheat'],
+  ],
+];
+
+/** Wins needed to finish a level: its number of recipes, or 5 at level 1 rising by one a level past the written ones. */
 export function spinsRequired(level: number): number {
-  return 5 + (level - 1);
+  return LEVEL_RECIPES[level - 1]?.length ?? 5 + (level - 1);
 }
 
 /** How many wins a multiplier hit is worth — always more than 1, scaling with level. */
@@ -36,6 +65,15 @@ export function multiplierBonus(level: number): number {
 
 /** Placeholder crops; names, timings and unlock levels are all to be balanced. */
 export const CROPS: CropDef[] = [
+  {
+    id: 'wheat',
+    name: 'Wheat',
+    footprint: { w: 1, d: 1 },
+    growSeconds: 8,
+    requirement: { kind: 'water' },
+    unlockLevel: 1,
+    color: '#e3c15a',
+  },
   {
     id: 'carrot',
     name: 'Carrot',

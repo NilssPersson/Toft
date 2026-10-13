@@ -1,7 +1,23 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { applyAction, growIsland, growLayout, initialState, migrateFromV1, wallsToDecorations } from '../game/index.ts';
-import type { Action, GameState, GameStateV1, GameStateV3, GridCell, Rotation } from '../game/index.ts';
+import {
+  applyAction,
+  growIsland,
+  growLayout,
+  initialState,
+  migrateFromV1,
+  resetWheel,
+  wallsToDecorations,
+} from '../game/index.ts';
+import type {
+  Action,
+  GameState,
+  GameStateV1,
+  GameStateV3,
+  GridCell,
+  ProgressionState,
+  Rotation,
+} from '../game/index.ts';
 import { now, roll } from './clock.ts';
 import type { ShopKind } from './shopItems.ts';
 
@@ -41,27 +57,32 @@ interface StoreState {
   /** The open left panel, if any. The wheel's stays open while the wheel turns. */
   openPanel: PanelId | null;
   isWheelSpinning: boolean;
+  /** Progression as it was when the wheel started turning, so the HUD doesn't give the result away before it stops. */
+  progressionBeforeSpin: ProgressionState | null;
   togglePanel: (panel: PanelId) => void;
   closePanel: () => void;
   setWheelSpinning: (isSpinning: boolean) => void;
 }
 
 /** Bump when GameState changes shape, and teach migrateSave the old shape. */
-const SAVE_VERSION = 4;
+const SAVE_VERSION = 5;
 
 interface Save {
   game: GameState;
 }
 
-/**
- * Upgrades an older save. Version 2 added the player and the walls; version 3 grew the island;
- * version 4 turned the walls into decorations.
- */
+/** Brings a save up to version 4: version 2 added the player and the walls; version 3 grew the island. */
+function migrateToV4(game: GameState | GameStateV3 | GameStateV1, version: number): GameState {
+  if (version < 2) return wallsToDecorations(migrateFromV1(growLayout(game)));
+  if (version < 3) return wallsToDecorations(growIsland(game as GameStateV3));
+  if (version < 4) return wallsToDecorations(game as GameStateV3);
+  return game as GameState;
+}
+
+/** Upgrades an older save. Version 4 turned the walls into decorations; version 5 moved the wheel onto recipes. */
 export function migrateSave(persisted: unknown, version: number): Save {
   const save = persisted as { game: GameState | GameStateV3 | GameStateV1 };
-  if (version < 2) return { game: wallsToDecorations(migrateFromV1(growLayout(save.game))) };
-  if (version < 3) return { game: wallsToDecorations(growIsland(save.game as GameStateV3)) };
-  if (version < 4) return { game: wallsToDecorations(save.game as GameStateV3) };
+  if (version < 5) return { game: resetWheel(migrateToV4(save.game, version)) };
   return save as Save;
 }
 
@@ -83,13 +104,15 @@ export const useStore = create<StoreState>()(
 
       openPanel: null,
       isWheelSpinning: false,
+      progressionBeforeSpin: null,
       togglePanel: (panel) => {
         if (!get().isWheelSpinning) set({ openPanel: get().openPanel === panel ? null : panel });
       },
       closePanel: () => {
         if (!get().isWheelSpinning) set({ openPanel: null });
       },
-      setWheelSpinning: (isSpinning) => set({ isWheelSpinning: isSpinning }),
+      setWheelSpinning: (isSpinning) =>
+        set({ isWheelSpinning: isSpinning, progressionBeforeSpin: isSpinning ? get().game.progression : null }),
     }),
     {
       name: 'toft-save',
@@ -100,6 +123,11 @@ export const useStore = create<StoreState>()(
     },
   ),
 );
+
+/** The progression the HUD shows: frozen at its pre-spin value while the wheel turns. */
+export function shownProgression(state: StoreState): ProgressionState {
+  return state.progressionBeforeSpin ?? state.game.progression;
+}
 
 /** Convenience for spins: the roll is generated here, not inside the rules. */
 export function spin(): void {

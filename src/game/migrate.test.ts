@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ISLAND_SIZE, PLAYER_SPAWN, STARTING_WALLS, STONE_WALL_ID } from './config.ts';
-import { growIsland, growLayout, migrateFromV1, wallsToDecorations } from './migrate.ts';
+import { ISLAND_SIZE, PLAYER_SPAWN, STARTING_WALLS, STONE_WALL_ID, spinsRequired } from './config.ts';
+import { growIsland, growLayout, migrateFromV1, resetWheel, wallsToDecorations } from './migrate.ts';
 import type { GameStateV1, GameStateV3 } from './migrate.ts';
 import { initialState } from './rules.ts';
 import type { GridCell, PlacedCrop } from './types.ts';
@@ -93,5 +93,27 @@ describe('wallsToDecorations', () => {
   it('gives a save from before the player the same stone walls a new island starts with', () => {
     const game = wallsToDecorations(migrateFromV1(v1Save([])));
     expect(game.decorations).toEqual(initialState().decorations);
+  });
+});
+
+describe('resetWheel', () => {
+  it('empties the wheel, forgets the last spin and keeps the wins needed within the level', () => {
+    const lastSpin = {
+      spotIndex: 7,
+      spotKind: 'crop' as const,
+      outcome: 'miss' as const,
+      progress: 0,
+      leveledUp: false,
+    };
+    const save = {
+      ...initialState(),
+      wheel: { filled: [true, true, false, false, false, false] },
+      progression: { level: 1, spinsRemaining: 99 },
+      lastSpin,
+    };
+    const game = resetWheel(save);
+    expect(game.wheel.filled.some(Boolean)).toBe(false);
+    expect(game.lastSpin).toBeNull();
+    expect(game.progression).toEqual({ level: 1, spinsRemaining: spinsRequired(1) });
   });
 });

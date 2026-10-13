@@ -104,13 +104,14 @@ export interface ProgressionState {
   spinsRemaining: number;
 }
 
-export type SpotKind = 'crop' | 'multiplier' | 'reset';
+export type SpotKind = 'crop' | 'multiplier' | 'empty';
 
 export interface SpinResult {
   spotIndex: number;
   spotKind: SpotKind;
-  outcome: 'win' | 'multiplier' | 'reset';
-  /** How much spinsRemaining dropped (0 on reset). */
+  /** A miss only loses the filled slots; the level's progress is kept. */
+  outcome: 'win' | 'multiplier' | 'miss';
+  /** How much spinsRemaining dropped (0 on a miss). */
   progress: number;
   leveledUp: boolean;
 }
